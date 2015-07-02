@@ -1,4 +1,4 @@
-module Bf2Sat.SAT (Time, Component, Fml, States, genSat) where
+module Bf2Sat.SAT (Time(..), Component(..), Fml(..), States(..), gen) where
 import Bf2Sat.Parser as P
 
 newtype Time = Time {getTime :: Int}  deriving (Eq)
@@ -6,6 +6,13 @@ data Component = PC Time Int | IC Time Int | InTape Int Int | MC Time Int | MidT
 data Fml a = And [Fml a] | Or [Fml a] | Not (Fml a) | Pred a deriving (Show, Eq)
 type States = Fml Component
 type PC = Int
+
+gen :: [P.Tree] -> [Int] -> States
+gen src inTape =
+            And [genInitState progLen inTape, genLastState progLen, genMiddleState src inTapeLength]
+            where
+              progLen = length src
+              inTapeLength = length inTape
 
 instance Show Time where
   show t = show $ getTime t
@@ -40,11 +47,6 @@ inc t = Time $ 1 + getTime t
 
 incPc :: PC -> PC
 incPc t = t + 1
-
-genSat :: [P.Tree] -> [Int] -> States
-genSat src inTape =
-            And [genInitState progLen inTape, genMiddleState src (length inTape), genLastState progLen]
-            where progLen = length src
 
 genInitState :: Int -> [Int] -> States
 genInitState programLength inTape =
@@ -81,4 +83,4 @@ genMiddleState :: [P.Tree] -> Int -> States
 genMiddleState src inLength = And $ fmap ((\t -> genStepRules t src inLength) . Time) [(getTime t0)..(getTime lastTime - 1)]
 
 genLastState :: Int -> States
-genLastState programLength = Pred (PC lastTime (programLength-1))
+genLastState programLength = Pred $ PC lastTime programLength
