@@ -27,10 +27,10 @@ t0 :: Time
 t0 = Time 0
 
 lastTime :: Time
-lastTime = Time 99
+lastTime = Time 9
 
 tapeLength :: Int
-tapeLength = 100
+tapeLength = 10
 
 outLength :: Int
 outLength = 10
