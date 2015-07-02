@@ -1,4 +1,4 @@
-module Bf2Sat.Parser (parse, Tree) where
+module Bf2Sat.Parser (parse, Tree(..)) where
 
 import           Text.ParserCombinators.Parsec hiding (parse)
 import qualified Text.ParserCombinators.Parsec as P
@@ -6,16 +6,16 @@ import qualified Text.ParserCombinators.Parsec as P
 data Tree = PtInc | PtDec | ValInc | ValDec | PutC | GetC | LoopBegin Int | LoopEnd Int deriving (Show, Eq)
 
 flattenList :: [[a']] -> [a']
-flattenList xs = foldl (++) [] xs
+flattenList = concat
 
 parse :: String -> Either ParseError [Tree]
-parse = P.parse (fmap conv (fmap (flattenList) (P.many (P.choice [ops, loop])))) "<TEXT>"
+parse = P.parse (fmap (conv . flattenList) (P.many (P.choice [ops, loop]))) "<TEXT>"
 
 conv :: [Tree] -> [Tree]
-conv xs = conv' 0 [] xs
+conv = conv' 0 []
 
 conv' :: Int -> [Tree] -> [Tree] -> [Tree]
-conv' idx acc (x:left) = conv' (idx+1) ((fixIdx idx x):acc) left
+conv' idx acc (x:left) = conv' (idx+1) (fixIdx idx x:acc) left
 conv' _ acc [] = reverse acc
 
 fixIdx :: Int -> Tree -> Tree
@@ -45,7 +45,9 @@ loop :: P.Parser [Tree]
 loop = do
     P.spaces
     _ <- P.char '['
-    chr <- ops
+    chr1 <- P.optionMaybe ops
     _ <- P.char ']'
     P.spaces
-    return $ [(LoopBegin (length chr))] ++ chr ++ [(LoopEnd (length chr))]
+    return $ case chr1 of
+        Just chr -> [LoopBegin (length chr)] ++ chr ++ [LoopEnd (length chr)]
+        Nothing -> [LoopBegin 0,LoopEnd 0]
