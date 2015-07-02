@@ -62,11 +62,9 @@ genInitState programLength inTape =
 prod :: [a] -> [a] -> [(a,a)]
 prod a b = concat $ fmap ( \it1 -> fmap (\it2 -> (it1,it2) ) b ) a
 
-genOpRule :: Int -> Int -> Time -> PC -> Tree -> States
-genOpRule programLength inLength t pc op =
-  if pc >= programLength then
-    And [Pred (PC t pc), Pred (PC (inc t) pc)]
-  else case op of
+genOpRule :: Int -> Time -> PC -> Tree -> States
+genOpRule inLength t pc op =
+  case op of
     P.PtInc -> And [Pred (PC t pc), Pred (PC (inc t) (incPc pc)), Or $ fmap (\idx -> And [Pred (MC t idx), Pred (MC (inc t) (idx + 1  `mod` tapeLength))]) [0..(tapeLength-1)]]
     P.PtDec -> And [Pred (PC t pc), Pred (PC (inc t) (incPc pc)), Or $ fmap (\idx -> And [Pred (MC t idx), Pred (MC (inc t) (idx + tapeLength - 1  `mod` tapeLength))]) [0..(tapeLength-1)]]
     P.ValInc -> And [Pred (PC t pc), Pred (PC (inc t) (incPc pc)), Or $ fmap (\idx -> And [Pred (MC t idx), Or $ fmap (\v -> And [Pred (MidTape t idx v),Pred (MidTape (inc t) idx (v+1 `mod` maxValue))]) [0..(maxValue-1)] ]) [0..(tapeLength-1)]]
@@ -77,7 +75,7 @@ genOpRule programLength inLength t pc op =
     P.LoopEnd next -> And [Pred (PC t pc), Or $ map (\mc -> And [Pred (MC t mc), Or [And[Not (Pred (MidTape t mc 0)), Pred (PC (inc t) next)], Pred (PC (inc t) (incPc pc))]]) [0..tapeLength-1]]
 
 genStepRules :: Time -> [P.Tree] -> Int -> States
-genStepRules t src inLength = Or $ fmap (\(pc,op) -> genOpRule (length src) inLength t pc op) (zip [0..] src)
+genStepRules t src inLength = Or $ And [Pred (PC t (length src)), Pred (PC (inc t) (length src))]:fmap (\(pc,op) -> genOpRule inLength t pc op) (zip [0..] src)
 
 genMiddleState :: [P.Tree] -> Int -> States
 genMiddleState src inLength = And $ fmap ((\t -> genStepRules t src inLength) . Time) [(getTime t0)..(getTime lastTime - 1)]

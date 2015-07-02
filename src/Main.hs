@@ -7,6 +7,7 @@ main :: IO ()
 main =
   case P.parse "[]" of
     Right src -> do
+      print $ show sat
       print $ show ids
       print $ "Length of IDs: " ++ show (length ids)
       print $ show r
