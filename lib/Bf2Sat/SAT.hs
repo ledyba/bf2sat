@@ -25,7 +25,7 @@ instance Show Component where
     MC t mc -> "mc_" ++ show t ++ "_" ++ show mc
     MidTape t idx v -> "mt_" ++ show t ++ "_"++ show idx ++ "_" ++ show v
     OC t oc -> "oc_" ++ show t ++ "_" ++ show oc
-    OutTape idx v -> "ot_" ++ "_" ++ show idx ++ "_" ++ show v
+    OutTape idx v -> "ot_" ++ show idx ++ "_" ++ show v
 
 maxValue :: Int
 maxValue = 16
@@ -65,12 +65,12 @@ prod a b = concat $ fmap ( \it1 -> fmap (\it2 -> (it1,it2) ) b ) a
 genOpRule :: Int -> Time -> PC -> Tree -> States
 genOpRule inLength t pc op =
   case op of
-    P.PtInc -> And [Pred (PC t pc), Pred (PC (inc t) (incPc pc)), Or $ fmap (\idx -> And [Pred (MC t idx), Pred (MC (inc t) (idx + 1  `mod` tapeLength))]) [0..(tapeLength-1)]]
-    P.PtDec -> And [Pred (PC t pc), Pred (PC (inc t) (incPc pc)), Or $ fmap (\idx -> And [Pred (MC t idx), Pred (MC (inc t) (idx + tapeLength - 1  `mod` tapeLength))]) [0..(tapeLength-1)]]
-    P.ValInc -> And [Pred (PC t pc), Pred (PC (inc t) (incPc pc)), Or $ fmap (\idx -> And [Pred (MC t idx), Or $ fmap (\v -> And [Pred (MidTape t idx v),Pred (MidTape (inc t) idx (v+1 `mod` maxValue))]) [0..(maxValue-1)] ]) [0..(tapeLength-1)]]
-    P.ValDec -> And [Pred (PC t pc), Pred (PC (inc t) (incPc pc)), Or $ fmap (\idx -> And [Pred (MC t idx), Or $ fmap (\v -> And [Pred (MidTape t idx v),Pred (MidTape (inc t) idx (v+maxValue-1 `mod` maxValue))]) [0..(maxValue-1)] ]) [0..(tapeLength-1)]]
-    P.PutC ->  And [Pred (PC t pc), Pred (PC (inc t) (incPc pc)), Or $ fmap (\(mi,oi) -> And $ [Pred (MC t mi), Pred (OC t oi)] ++ fmap (\v -> Or [And [Pred (MidTape t mi v), Pred (OutTape oi v)], Not $ And[Pred (MidTape t mi v), Not $ Pred (OutTape oi v)]]) [0..maxValue-1]) (prod [0..tapeLength-1] [0..outLength-1]) ]
-    P.GetC -> And [Pred (PC t pc), Pred (PC (inc t) (incPc pc)), Or $ fmap (\(mi,ii) -> And $ [Pred (MC t mi), Pred (IC t ii)] ++ fmap (\v -> Or [And [Pred (MidTape t mi v), Pred (OutTape ii v)], Not $ And[Pred (MidTape t mi v), Not $ Pred (InTape ii v)]]) [0..maxValue-1]) (prod [0..tapeLength-1] [0..inLength-1]) ]
+    P.PtInc -> And [Pred (PC t pc), Pred (PC (inc t) (incPc pc)), Or $ fmap (\idx -> And [Pred (MC t idx), Pred (MC (inc t) ((idx              + 1)  `mod` tapeLength))]) [0..(tapeLength-1)]]
+    P.PtDec -> And [Pred (PC t pc), Pred (PC (inc t) (incPc pc)), Or $ fmap (\idx -> And [Pred (MC t idx), Pred (MC (inc t) ((idx + tapeLength - 1)  `mod` tapeLength))]) [0..(tapeLength-1)]]
+    P.ValInc -> And [Pred (PC t pc), Pred (PC (inc t) (incPc pc)), Or $ fmap (\idx -> And [Pred (MC t idx), Or $ fmap (\v -> And [Pred (MidTape t idx v),Pred (MidTape (inc t) idx ((v            + 1) `mod` maxValue))]) [0..(maxValue-1)] ]) [0..(tapeLength-1)]]
+    P.ValDec -> And [Pred (PC t pc), Pred (PC (inc t) (incPc pc)), Or $ fmap (\idx -> And [Pred (MC t idx), Or $ fmap (\v -> And [Pred (MidTape t idx v),Pred (MidTape (inc t) idx ((v + maxValue - 1) `mod` maxValue))]) [0..(maxValue-1)] ]) [0..(tapeLength-1)]]
+    P.PutC ->  And [Pred (PC t pc), Pred (PC (inc t) (incPc pc)), Or $ fmap (\(mi,oi) -> And $ [Pred (MC t mi), Pred (OC t oi)] ++ fmap (\v -> Or [And [Pred (MidTape t mi v), Pred (OutTape oi v)], And[Not $ Pred (MidTape t mi v), Not $ Pred (OutTape oi v)]]) [0..(maxValue-1)]) (prod [0..(tapeLength-1)] [0..(outLength-1)]) ]
+    P.GetC -> And [Pred (PC t pc), Pred (PC (inc t) (incPc pc)), Or $ fmap (\(mi,ii) -> And $ [Pred (MC t mi), Pred (IC t ii)] ++ fmap (\v -> Or [And [Pred (MidTape t mi v), Pred (InTape ii v)], And[Not $ Pred (MidTape t mi v), Not $ Pred (InTape ii v)]]) [0..(maxValue-1)]) (prod [0..(tapeLength-1)] [0..(inLength-1)]) ]
     P.LoopBegin next -> And [Pred (PC t pc), Or $ map (\mc -> And [Pred (MC t mc), Or [And[Pred (MidTape t mc 0), Pred (PC (inc t) next)], Pred (PC (inc t) (incPc pc))]]) [0..tapeLength-1]]
     P.LoopEnd next -> And [Pred (PC t pc), Or $ map (\mc -> And [Pred (MC t mc), Or [And[Not (Pred (MidTape t mc 0)), Pred (PC (inc t) next)], Pred (PC (inc t) (incPc pc))]]) [0..tapeLength-1]]
 

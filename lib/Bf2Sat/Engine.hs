@@ -33,7 +33,7 @@ run' maxStep step src pc inTape ic mem pt out ids =
     run' maxStep (step+1) src pc inTape ic mem pt out nextIDS
   else case src !! pc of
     PtInc -> run' maxStep (step+1) src (pc+1) inTape ic mem (pt+1) out nextIDS
-    PtDec -> run' maxStep (step+1) src (pc+1) inTape ic mem (pt+1) out nextIDS
+    PtDec -> run' maxStep (step+1) src (pc+1) inTape ic mem (pt-1) out nextIDS
     ValInc -> run' maxStep (step+1) src (pc+1) inTape ic (fixMem mem pt 1) pt out nextIDS
     ValDec -> run' maxStep (step+1) src (pc+1) inTape ic (fixMem mem pt (-1)) pt out nextIDS
     PutC -> run' maxStep (step+1) src (pc+1) inTape ic mem pt ((mem !! pt):out) nextIDS

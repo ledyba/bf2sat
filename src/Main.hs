@@ -5,12 +5,13 @@ import Bf2Sat.Debug as D
 
 main :: IO ()
 main =
-  case P.parse "[,.]" of
+  case P.parse "," of
     Right src -> do
       print $ show sat
       print $ show ids
       print $ "Length of IDs: " ++ show (length ids)
       print $ show r
+      print $ show src
       where
         intape = [1,3,4,5]
         ids = E.run src intape 10 10
