@@ -5,7 +5,7 @@ import Bf2Sat.Debug as D
 
 main :: IO ()
 main =
-  case P.parse "," of
+  case P.parse ",." of
     Right src -> do
       print $ show sat
       print $ show ids
