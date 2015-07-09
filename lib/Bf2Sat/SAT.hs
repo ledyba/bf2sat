@@ -47,7 +47,7 @@ genInitState :: Int -> [Int] -> States
 genInitState programLength inTape =
                     And (pc ++ ic ++ it ++ mc ++ oc ++ mt)
                     where
-                      pc = Pred (PC t0 0):fmap (\i -> Not $ Pred $ PC t0 i) [1..(programLength-1)]
+                      pc = Pred (PC t0 0):fmap (\i -> Not $ Pred $ PC t0 i) [1..(programLength)]
                       ic = Pred (IC t0 0):fmap (\i -> Not $ Pred $ IC t0 i) [1..(length inTape - 1)]
                       mc = Pred (MC t0 0):fmap (\i -> Not $ Pred $ MC t0 i) [1..(tapeLength-1)]
                       oc = Pred (OC t0 0):fmap (\i -> Not $ Pred $ OC t0 i) [1..(outLength-1)]

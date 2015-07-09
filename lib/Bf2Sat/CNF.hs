@@ -10,7 +10,7 @@ removeNot :: Fml a -> Fml a
 removeNot (Not (And a)) = Or $ fmap (removeNot . Not) a
 removeNot (Not (Or a)) = And $ fmap (removeNot . Not) a
 removeNot (Not (Not a)) = a
-removeNot (Not (Pred a)) = Pred a
+removeNot (Not (Pred a)) = Not (Pred a)
 removeNot (And a) = And $ fmap removeNot a
 removeNot (Or a) = Or $ fmap removeNot a
 removeNot (Pred a) = Pred a

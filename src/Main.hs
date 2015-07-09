@@ -11,22 +11,32 @@ main :: IO ()
 main = do
   argv <- getArgs
   case argv of
-    ("run":_) -> do
-      print $ show sat
-      print $ show ids
-      print $ "Length of IDs: " ++ show (length ids)
-      print $ show r
-      print $ show src
+    ("create":_) -> do
       writeFile "sat.txt" (C.toDMACS isat dict)
       writeFile "pred.txt" (show dict)
-    _ -> do
+    ("check":_) -> do
       preds <- fmap (read :: String -> [(Int, Component)]) (readFile "pred.txt")
-      ans <- readFile "ans.txt"
-      print $ show $ R.fromDMACS preds ans
+      ansStr <- readFile "ans.txt"
+      ans <- return $ R.fromDMACS preds ansStr
+      val <- return $ D.valuation (fmap fst ans) intape ids
+      print $ "Exec " ++ show (length ids) ++ " Steps"
+      pairs <- return $  fmap (\((p1,a),(p2,v)) -> if p1 == p2 then (p1,a,v) else error "???" ) $ zip ans val
+      print pairs
+      print "Do not match: "
+      print $ filter (\(_,a,v) -> a /= v) pairs
+    ("test":_) -> do
+      print $ show src
+      print $ show ids
+      print $ show r
+      print $ show rnot
+      print $ show cnf
+    _ -> print "(>_<)"
   where
     Right src = P.parse "+[.-]"
     intape = [1,3,4,5]
     ids = E.run src intape 10 10
     sat = S.gen src intape
     r = D.eval  sat intape ids
-    (isat, dict) = C.alias $ C.toCNF $ C.removeNot sat
+    rnot = C.removeNot sat
+    cnf = C.toCNF rnot
+    (isat, dict) = C.alias cnf

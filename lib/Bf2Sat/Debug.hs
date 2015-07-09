@@ -1,4 +1,4 @@
-module Bf2Sat.Debug (eval) where
+module Bf2Sat.Debug (eval, valuation) where
 
 import Bf2Sat.SAT
 import Bf2Sat.Engine
@@ -10,10 +10,15 @@ eval' (InTape idx v) inTape _ = (inTape !! idx) == v
 eval' (MC t pt) _ ids = getPT (ids !! getTime t) == pt
 eval' (MidTape t pt v) _ ids = (getMem (ids !! getTime t) !! pt) == v
 eval' (OC t oc) _ ids = getOC (ids !! getTime t) == oc
-eval' (OutTape idx v) _ ids = getOut (last ids) !! idx == v
+eval' (OutTape idx v) _ ids = if idx < length tape then (tape !! idx) == v
+                              else v == 0
+                              where tape = getOut (last ids)
 
 eval :: States -> [Int] -> [ID] -> Bool
 eval (Pred x) intape ids = eval' x intape ids
 eval (Not x) intape ids = not (eval x intape ids)
 eval (And xs) intape ids = foldl (\b x -> b && eval x intape ids) True xs
 eval (Or xs) intape ids = foldl (\b x -> b || eval x intape ids) False xs
+
+valuation :: [Component] -> [Int] -> [ID] -> [(Component, Bool)]
+valuation comps intape ids = fmap (\comp -> (comp, eval' comp intape ids)) comps
