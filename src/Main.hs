@@ -4,8 +4,6 @@ import Bf2Sat.Engine as E
 import Bf2Sat.Debug as D
 import Bf2Sat.CNF as C
 
-import System.IO
-
 main :: IO ()
 main =
   case P.parse "+[.-]" of
@@ -15,7 +13,8 @@ main =
       print $ "Length of IDs: " ++ show (length ids)
       print $ show r
       print $ show src
-      hPutStrLn stderr $ C.toDMACS isat dict
+      writeFile "sat.txt" (C.toDMACS isat dict)
+      writeFile "pred.txt" (show dict)
       where
         intape = [1,3,4,5]
         ids = E.run src intape 10 10

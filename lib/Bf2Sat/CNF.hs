@@ -1,12 +1,10 @@
 module Bf2Sat.CNF (removeNot, toCNF, alias, toDMACS) where
 
 import Bf2Sat.SAT
-import Data.Map
+import qualified Data.Map as M
+import Data.Map ((!))
 import qualified Data.List as L
-import qualified Data.Set as S
-
-uniquify :: Ord a => [a] -> [a]
-uniquify = S.toList . S.fromList
+import qualified Data.Witherable as W
 
 removeNot :: Fml a -> Fml a
 removeNot (Not (And a)) = Or $ fmap (removeNot . Not) a
@@ -50,25 +48,25 @@ toCNF :: Fml Component -> [[CFml Component]]
 toCNF xs = toSat' xs []
 
 toNorm :: [[CFml Component]] -> [[CFml String]]
-toNorm xs = fmap (fmap c2s) xs
+toNorm = fmap (fmap c2s)
 
-alias :: [[CFml Component]] -> ([[Int]], [(String, Int)])
-alias cnf = (fmap (fmap term2int) norm, vs)
+alias :: [[CFml Component]] -> ([[Int]], [(Int, Component)])
+alias cnf = (fmap (fmap term2int) norm, dictR)
   where
     norm = toNorm cnf
     getFml (CNot a) = a
     getFml (CAff a) = a
-    flatten = norm >>= fmap getFml
-    uniq = uniquify flatten
-    vs = zip uniq [1..]
-    dict = fromList vs
+    preds = W.hashNub $ norm >>= fmap getFml
+    vs = zip preds [1..]
+    dict = M.fromList vs
     term2int (CAff x) = dict ! x
     term2int (CNot x) = -(dict ! x)
+    dictR = fmap (\(s,idx) -> (idx, read s)) vs
 
-toDMACS :: [[Int]] -> [(String, Int)] -> String
+toDMACS :: [[Int]] -> [(Int, Component)] ->String
 toDMACS cnf dict = "p cnf "++ nvariable++" "++nand++"\n"++left++" 0"
   where
     nvariable = show $ length dict
     nand = show $ length cnf
-    terms = fmap (L.intercalate " ") (fmap (fmap show) cnf)
+    terms = fmap (L.unwords . fmap show) cnf
     left = L.intercalate " 0\n" terms

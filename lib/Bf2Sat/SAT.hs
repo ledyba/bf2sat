@@ -1,11 +1,11 @@
-module Bf2Sat.SAT (Time(..), Component(..), Fml(..), States(..), gen) where
+module Bf2Sat.SAT (Time(..), Component(..), Fml(..), States, gen) where
 import Bf2Sat.Parser as P
 
-import Data.List
+import qualified Control.Arrow as CA
 
 newtype Time = Time {getTime :: Int}  deriving (Eq)
-data Component = PC Time Int | IC Time Int | InTape Int Int | MC Time Int | MidTape Time Int Int | OC Time Int | OutTape Int Int | Tmp [Int] deriving (Eq)
-data Fml a = And [Fml a] | Or [Fml a] | Not (Fml a) | Pred a deriving (Show, Eq)
+data Component = PC Time Int | IC Time Int | InTape Int Int | MC Time Int | MidTape Time Int Int | OC Time Int | OutTape Int Int | Tmp [Int] deriving (Eq,Show,Read)
+data Fml a = And [Fml a] | Or [Fml a] | Not (Fml a) | Pred a deriving (Show, Read, Eq)
 type States = Fml Component
 type PC = Int
 
@@ -17,18 +17,10 @@ gen src inTape =
               inTapeLength = length inTape
 
 instance Show Time where
-  show t = show $ getTime t
+  showsPrec d t = showsPrec d (getTime t)
 
-instance Show Component where
-  show z = case z of
-    PC t pc -> "pc_" ++ show t ++ "_" ++ show pc
-    IC t ic -> "ic_" ++ show t ++ "_" ++ show ic
-    InTape idx v -> "it_" ++ show idx ++ "_" ++ show v
-    MC t mc -> "mc_" ++ show t ++ "_" ++ show mc
-    MidTape t idx v -> "mt_" ++ show t ++ "_"++ show idx ++ "_" ++ show v
-    OC t oc -> "oc_" ++ show t ++ "_" ++ show oc
-    OutTape idx v -> "ot_" ++ show idx ++ "_" ++ show v
-    Tmp lst -> "tmp_" ++ intercalate "_" (fmap show (reverse lst))
+instance Read Time where
+  readsPrec d s = fmap (CA.first Time) (readsPrec d s)
 
 maxValue :: Int
 maxValue = 16

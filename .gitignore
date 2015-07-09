@@ -1,4 +1,6 @@
 .cabal-sandbox/
 cabal.sandbox.config
 dist/
-
+sat.txt
+pred.txt
+ans.txt

@@ -19,8 +19,8 @@ conv' idx acc (x:left) = conv' (idx+1) (fixIdx idx x:acc) left
 conv' _ acc [] = reverse acc
 
 fixIdx :: Int -> Tree -> Tree
-fixIdx idx (LoopBegin d) = LoopBegin (d + idx + 1)
-fixIdx idx (LoopEnd d) = LoopEnd (idx - d - 1)
+fixIdx idx (LoopBegin d) = LoopBegin (d + idx + 1 + 1)
+fixIdx idx (LoopEnd d) = LoopEnd (idx - d - 1 + 1)
 fixIdx _ x = x
 
 ops :: P.Parser [Tree]
