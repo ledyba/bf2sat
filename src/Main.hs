@@ -27,14 +27,14 @@ main = do
       print notmatched
     ("test":_) -> do
       print $ show src
-      putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> (show idx) ++ ": " ++ (show it)) (zip [0..] ids)
+      putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> (show idx) ++ ": " ++ (show it)) (zip [0.. ] ids)
       -- print $ show sat
       print $ show r
     _ -> print "(>_<)"
   where
-    Right src = P.parse "+[.-]"
-    intape = [1,3,4,5]
-    ids = E.run src intape 10 10
+    Right src = P.parse "++[-]"
+    intape = [0]
+    ids = E.run src intape S.tapeLength S.timeLength
     sat = S.gen src intape
     r = D.eval  sat intape ids
     rnot = C.removeNot sat

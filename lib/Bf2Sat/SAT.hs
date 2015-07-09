@@ -1,7 +1,16 @@
-module Bf2Sat.SAT (Time(..), Component(..), Fml(..), States, gen) where
+module Bf2Sat.SAT (Time(..), Component(..), Fml(..), States, gen, maxValue, outLength, tapeLength, timeLength) where
 import Bf2Sat.Parser as P
 
 import qualified Control.Arrow as CA
+
+maxValue :: Int
+maxValue = 16
+timeLength :: Int
+timeLength = 10
+tapeLength :: Int
+tapeLength = 10
+outLength :: Int
+outLength = 10
 
 newtype Time = Time {getTime :: Int}  deriving (Eq)
 data Component = PC Time Int | IC Time Int | InTape Int Int | MC Time Int | MidTape Time Int Int | OC Time Int | OutTape Int Int | Tmp [Int] deriving (Eq,Show,Read)
@@ -22,20 +31,12 @@ instance Show Time where
 instance Read Time where
   readsPrec d s = fmap (CA.first Time) (readsPrec d s)
 
-maxValue :: Int
-maxValue = 16
-
 t0 :: Time
 t0 = Time 0
 
+
 lastTime :: Time
-lastTime = Time 9
-
-tapeLength :: Int
-tapeLength = 10
-
-outLength :: Int
-outLength = 10
+lastTime = Time (timeLength-1)
 
 inc :: Time -> Time
 inc t = Time $ 1 + getTime t
@@ -139,8 +140,8 @@ genOpRule programLength inLength t pc op =
     P.ValDec         -> And [nowPc, incPCp,            keepedMC, keepedOC, keepedIC, fixMidTape from to (-1)]
     P.PutC           -> And [nowPc, incPCp, keepedMem, keepedMC,           keepedIC, printOutput from, incOC from to ]
     P.GetC           -> And [nowPc, incPCp,            keepedMC, keepedOC,           readInput inLength from to, incIC inLength from to]
-    P.LoopBegin next -> And [nowPc,         keepedMem, keepedMC, keepedOC, keepedIC, Or $ map (\mc -> And [Pred (MC t mc), Or [And[     Pred (MidTape t mc 0) , changePC programLength to next], incPCp]]) [0..tapeLength-1]]
-    P.LoopEnd next   -> And [nowPc,         keepedMem, keepedMC, keepedOC, keepedIC, Or $ map (\mc -> And [Pred (MC t mc), Or [And[Not (Pred (MidTape t mc 0)), changePC programLength to next], incPCp]]) [0..tapeLength-1]]
+    P.LoopBegin next -> And [nowPc,         keepedMem, keepedMC, keepedOC, keepedIC, Or $ map (\mc -> And [Pred (MC t mc), Or [And[     Pred (MidTape from mc 0) , changePC programLength to next], And[Not (Pred (MidTape from mc 0)), incPCp]]]) [0..tapeLength-1]]
+    P.LoopEnd next   -> And [nowPc,         keepedMem, keepedMC, keepedOC, keepedIC, Or $ map (\mc -> And [Pred (MC t mc), Or [And[Not (Pred (MidTape from mc 0)), changePC programLength to next], And[     Pred (MidTape from mc 0) , incPCp]]]) [0..tapeLength-1]]
   where
     from = t
     to = inc t
