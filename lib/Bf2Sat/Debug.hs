@@ -13,6 +13,7 @@ eval' (OC t oc) _ ids = getOC (ids !! getTime t) == oc
 eval' (OutTape idx v) _ ids = if idx < length tape then (tape !! idx) == v
                               else v == 0
                               where tape = getOut (last ids)
+eval' (Tmp _) _ _ = error "you can't eval temporary value"
 
 eval :: States -> [Int] -> [ID] -> Bool
 eval (Pred x) intape ids = eval' x intape ids

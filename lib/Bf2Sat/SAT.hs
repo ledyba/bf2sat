@@ -82,7 +82,7 @@ fixMidTape from to delta = Or $ fmap eachIndex [0..(tapeLength-1)]
                                     else Not (Pred (MidTape to idx v))
 --
 keepSC :: Int -> (Time->Int->Component) -> Time -> Time -> States
-keepSC listLength cons from to = And $ fmap (\idx-> Or [And [Pred (cons from idx), Pred (cons to idx)], And [Not (Pred (cons from idx)), Not (Pred (cons to idx))]]) [0..listLength - 1]
+keepSC listLength cons from to = And $ fmap (\idx-> Or [And [Pred (cons from idx), Pred (cons to idx)], And [Not (Pred (cons from idx)), Not (Pred (cons to idx))]]) [0..listLength-1]
 
 keepOC :: Time -> Time -> States
 keepOC = keepSC tapeLength OC
@@ -92,6 +92,9 @@ keepIC inLength = keepSC inLength IC
 
 keepMC :: Time -> Time -> States
 keepMC = keepSC tapeLength MC
+
+keepPC :: Int -> Time -> Time -> States
+keepPC programLength = keepSC programLength PC
 
 incSC :: Int -> (Time->Int->Component) -> Int -> Time -> Time -> States
 incSC counterLength cons delta from to = Or $ fmap eachValue [0..(counterLength - 1)]
@@ -104,15 +107,28 @@ incIC inLength = incSC inLength IC 1
 incOC :: Time -> Time -> States
 incOC = incSC outLength OC 1
 incMC :: Time -> Time -> States
-incMC = incSC tapeLength MC 1
+incMC = incSC (tapeLength-1) MC 1
 decMC :: Time -> Time -> States
-decMC = incSC tapeLength MC 1
+decMC = incSC (tapeLength-1) MC 1
 
 readInput :: Int -> Time -> Time -> States
 readInput inLength from to = Or $ fmap (\(mi,ii) -> And $ [Pred (MC from mi), Pred (IC to ii), keepMidTapeElse from to mi, Or $ fmap (\v -> Or [And [Pred (MidTape to mi v), Pred (InTape ii v)], And[Not $ Pred (MidTape to mi v), Not $ Pred (InTape ii v)]]) [0..(maxValue-1)]]) (prod [0..(tapeLength-1)] [0..(inLength-1)])
 
 printOutput :: Time -> States
 printOutput from = Or $ fmap (\(mi,oi) -> And $ [Pred (MC from mi), Pred (OC from oi), Or $ fmap (\v -> Or [And [Pred (MidTape from mi v), Pred (OutTape oi v)], And[Not $ Pred (MidTape from mi v), Not $ Pred (OutTape oi v)]]) [0..(maxValue-1)]]) (prod [0..(tapeLength-1)] [0..(outLength-1)])
+
+acceptRule :: Int -> Int -> Time -> States
+acceptRule programLength inLength t =
+  And [nowPc, keepedPC, keepedMem, keepedMC, keepedOC, keepedIC]
+  where
+    from = t
+    to = inc t
+    nowPc = Pred (PC t programLength)
+    keepedPC = keepPC programLength from to
+    keepedMem = keepMidTape from to
+    keepedOC = keepOC from to
+    keepedMC = keepMC from to
+    keepedIC = keepIC inLength from to
 
 genOpRule :: Int -> Int -> Time -> PC -> Tree -> States
 genOpRule programLength inLength t pc op =
@@ -129,17 +145,26 @@ genOpRule programLength inLength t pc op =
     from = t
     to = inc t
     nowPc = Pred (PC t pc)
-    incPCp = changePC programLength (inc t) (incPc pc)
-    keepedMem = keepMidTape t (inc t)
-    keepedOC = keepOC t (inc t)
-    keepedMC = keepMC t (inc t)
-    keepedIC = keepIC inLength t (inc t)
+    incPCp = changePC programLength to (incPc pc)
+    keepedMem = keepMidTape from to
+    keepedOC = keepOC from to
+    keepedMC = keepMC from to
+    keepedIC = keepIC inLength from to
 
 genStepRules :: Time -> [P.Tree] -> Int -> States
-genStepRules t src inLength = Or $ And [Pred (PC t (length src)), Pred (PC (inc t) (length src))]:fmap (uncurry $ genOpRule (length src) inLength t) (zip [0..] src)
+genStepRules t src inLength = Or $ acceptRule (length src) inLength t:fmap (uncurry $ genOpRule (length src) inLength t) (zip [0..] src)
 
 genMiddleState :: [P.Tree] -> Int -> States
 genMiddleState src inLength = And $ fmap ((\t -> genStepRules t src inLength) . Time) [(getTime t0)..(getTime lastTime - 1)]
 
+zeroFillOut :: Int -> States
+zeroFillOut idx = And $ (Pred $ OutTape idx 0):fmap (\k -> Not $ Pred $ OutTape idx k) [1..maxValue-1]
+
+greaterThanOC :: Time -> Int -> States
+greaterThanOC t idx = Or $ fmap (\k -> Pred $ OC t k) [idx+1..(outLength-1)]
+
+flushOC :: Time -> States
+flushOC t = And $ fmap (\ idx -> Or [greaterThanOC t idx, zeroFillOut idx]) [0..outLength-1]
+
 genLastState :: Int -> States
-genLastState programLength = Pred $ PC lastTime programLength
+genLastState programLength = And $ [Pred $ PC lastTime programLength, flushOC lastTime]

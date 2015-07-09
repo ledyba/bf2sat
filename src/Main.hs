@@ -6,6 +6,7 @@ import Bf2Sat.CNF as C
 import Bf2Sat.RCNF as R
 
 import System.Environment
+import qualified Data.List as L
 
 main :: IO ()
 main = do
@@ -21,12 +22,13 @@ main = do
       val <- return $ D.valuation (fmap fst ans) intape ids
       print $ "Exec " ++ show (length ids) ++ " Steps"
       pairs <- return $  fmap (\((p1,a),(p2,v)) -> if p1 == p2 then (p1,a,v) else error "???" ) $ zip ans val
-      print "Do not match: "
-      print $ filter (\(_,a,v) -> a /= v) pairs
+      notmatched <- return $ filter (\(_,a,v) -> a /= v) pairs
+      print $ "Do not match: " ++ (show $ length notmatched) ++ " items"
+      print notmatched
     ("test":_) -> do
       print $ show src
-      print $ show ids
-      print $ show sat
+      putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> (show idx) ++ ": " ++ (show it)) (zip [0..] ids)
+      -- print $ show sat
       print $ show r
     _ -> print "(>_<)"
   where
