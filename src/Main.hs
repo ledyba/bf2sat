@@ -21,15 +21,13 @@ main = do
       val <- return $ D.valuation (fmap fst ans) intape ids
       print $ "Exec " ++ show (length ids) ++ " Steps"
       pairs <- return $  fmap (\((p1,a),(p2,v)) -> if p1 == p2 then (p1,a,v) else error "???" ) $ zip ans val
-      print pairs
       print "Do not match: "
       print $ filter (\(_,a,v) -> a /= v) pairs
     ("test":_) -> do
       print $ show src
       print $ show ids
+      print $ show sat
       print $ show r
-      print $ show rnot
-      print $ show cnf
     _ -> print "(>_<)"
   where
     Right src = P.parse "+[.-]"
