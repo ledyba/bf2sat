@@ -19,7 +19,7 @@ cabal-version:       >=1.10
 Library
   Default-Language:     Haskell2010
   GHC-Options:          -Wall
-  Exposed-Modules:      Bf2Sat.Parser Bf2Sat.SAT Bf2Sat.Engine Bf2Sat.Debug
+  Exposed-Modules:      Bf2Sat.Parser Bf2Sat.SAT Bf2Sat.Engine Bf2Sat.Debug Bf2Sat.CNF
   hs-source-dirs:       lib
   Build-Depends:        base,parsec >= 3, containers
 

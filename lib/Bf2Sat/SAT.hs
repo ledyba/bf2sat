@@ -1,8 +1,10 @@
 module Bf2Sat.SAT (Time(..), Component(..), Fml(..), States(..), gen) where
 import Bf2Sat.Parser as P
 
+import Data.List
+
 newtype Time = Time {getTime :: Int}  deriving (Eq)
-data Component = PC Time Int | IC Time Int | InTape Int Int | MC Time Int | MidTape Time Int Int | OC Time Int | OutTape Int Int deriving (Eq)
+data Component = PC Time Int | IC Time Int | InTape Int Int | MC Time Int | MidTape Time Int Int | OC Time Int | OutTape Int Int | Tmp [Int] deriving (Eq)
 data Fml a = And [Fml a] | Or [Fml a] | Not (Fml a) | Pred a deriving (Show, Eq)
 type States = Fml Component
 type PC = Int
@@ -26,6 +28,7 @@ instance Show Component where
     MidTape t idx v -> "mt_" ++ show t ++ "_"++ show idx ++ "_" ++ show v
     OC t oc -> "oc_" ++ show t ++ "_" ++ show oc
     OutTape idx v -> "ot_" ++ show idx ++ "_" ++ show v
+    Tmp lst -> "tmp_" ++ intercalate "_" (fmap show (reverse lst))
 
 maxValue :: Int
 maxValue = 16
@@ -75,7 +78,7 @@ genOpRule inLength t pc op =
     P.LoopEnd next -> And [Pred (PC t pc), Or $ map (\mc -> And [Pred (MC t mc), Or [And[Not (Pred (MidTape t mc 0)), Pred (PC (inc t) next)], Pred (PC (inc t) (incPc pc))]]) [0..tapeLength-1]]
 
 genStepRules :: Time -> [P.Tree] -> Int -> States
-genStepRules t src inLength = Or $ And [Pred (PC t (length src)), Pred (PC (inc t) (length src))]:fmap (\(pc,op) -> genOpRule inLength t pc op) (zip [0..] src)
+genStepRules t src inLength = Or $ And [Pred (PC t (length src)), Pred (PC (inc t) (length src))]:fmap (uncurry $ genOpRule inLength t) (zip [0..] src)
 
 genMiddleState :: [P.Tree] -> Int -> States
 genMiddleState src inLength = And $ fmap ((\t -> genStepRules t src inLength) . Time) [(getTime t0)..(getTime lastTime - 1)]
