@@ -20,6 +20,8 @@ fromDMACS preds str = filter predFilter predMap
     sortedR = sortOn fst r
     sortedP = sortOn fst preds
     zipped = zip sortedP sortedR
-    predMap = fmap (\((idx, p),(idx2,ans)) -> if idx /= idx2 then error "???" else (p,ans)) zipped
+    matcher ((idx, p),(idx2,ans)) | idx == idx2 = (p,ans)
+                                  | otherwise = error "???"
+    predMap = fmap matcher zipped
     predFilter (Tmp _,_) = False
     predFilter _ = True
