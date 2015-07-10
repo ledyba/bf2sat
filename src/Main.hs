@@ -18,24 +18,25 @@ main = do
     ("check":_) -> do
       preds <- fmap (read :: String -> [(Int, Component)]) (readFile "pred.txt")
       ansStr <- readFile "ans.txt"
-      ans <- return $ R.fromDMACS preds ansStr
-      val <- return $ D.valuation (fmap fst ans) intape ids
+      let ans = R.fromDMACS preds ansStr
+      let val = D.valuation (fmap fst ans) intape ids
       print $ "Exec " ++ show (length ids) ++ " Steps"
-      pairs <- return $  fmap (\((p1,a),(p2,v)) -> if p1 == p2 then (p1,a,v) else error "???" ) $ zip ans val
-      notmatched <- return $ filter (\(_,a,v) -> a /= v) pairs
-      print $ "Do not match: " ++ (show $ length notmatched) ++ " items"
+      let pairs = (\((p1,a),(p2,v)) -> if p1 == p2 then (p1,a,v) else error "???" ) <$> zip ans val
+      let notmatched = filter (\(_,a,v) -> a /= v) pairs
+      print $ "Do not match: " ++ show (length notmatched) ++ " items"
       print notmatched
     ("test":_) -> do
       print $ show src
-      putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> (show idx) ++ ": " ++ (show it)) (zip [0.. ] ids)
+      putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> show idx ++ ": " ++ show it) (zip ([0.. ] :: [Int]) ids)
       -- print $ show sat
       print $ show r
     _ -> print "(>_<)"
   where
-    Right src = P.parse "++[-]"
+    src = "++[-]"
+    Right ast = P.parse src
     intape = [0]
-    ids = E.run src intape S.tapeLength S.timeLength
-    sat = S.gen src intape
+    ids = E.run ast intape S.tapeLength S.timeLength
+    sat = S.gen ast intape
     r = D.eval  sat intape ids
     rnot = C.removeNot sat
     cnf = C.toCNF rnot
