@@ -6,6 +6,7 @@ import Bf2Sat.CNF as C
 import Bf2Sat.RCNF as R
 
 import System.Environment
+import Control.Applicative ((<$>))
 import qualified Data.List as L
 
 helloWorld :: String
