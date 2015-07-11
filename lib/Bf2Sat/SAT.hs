@@ -1,6 +1,7 @@
 module Bf2Sat.SAT (Time(..), Component(..), Fml(..), States, gen, maxValue, outLength, tapeLength, timeLength) where
 import Bf2Sat.Parser as P
 
+import Data.Monoid (mappend)
 import qualified Control.Arrow as CA
 
 maxValue :: Int
