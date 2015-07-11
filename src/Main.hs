@@ -22,7 +22,7 @@ intape :: [Int]
 intape = [0]
 
 src :: String
-src = easyloop
+src = helloWorld
 
 create :: IO()
 create = do
