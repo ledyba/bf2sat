@@ -27,18 +27,18 @@ Library
             Brainfuck2Sat.CNF
             Brainfuck2Sat.RCNF
   hs-source-dirs:       lib
-  Build-Depends:        base,parsec >= 3, containers, witherable, split
+  Build-Depends:        base,parsec >= 3, containers, witherable, split, hashable, hashmap
 
 executable bf2sat
   main-is:             Main.hs
-  ghc-options:
-    -O2
-    -threaded
-    -fprof-auto
-    -prof
-    -rtsopts
-    -auto-all -caf-all
-    "-with-rtsopts=-N -p -s -h -i0.1"
+--  ghc-options:
+--    -O2
+--    -threaded
+--    -fprof-auto
+--    -prof
+--    -rtsopts
+--    -auto-all -caf-all
+--    "-with-rtsopts=-N -p -s -h -i0.01 -K100M"
   -- other-modules:
   -- other-extensions:
   build-depends:       base, brainfuck2sat

@@ -2,6 +2,7 @@ module Brainfuck2Sat.SAT (Time(..), Component(..), Fml(..), States, gen, maxValu
 import Brainfuck2Sat.Parser as P
 
 import Data.Monoid (mappend)
+import Data.Hashable (Hashable, hash, hashWithSalt)
 import qualified Control.Arrow as CA
 
 maxValue :: Int
@@ -13,11 +14,24 @@ tapeLength = 10
 outLength :: Int
 outLength = 10
 
-newtype Time = Time {getTime :: Int}  deriving (Eq)
-data Component = PC Time Int | IC Time Int | InTape Int Int | MC Time Int | MidTape Time Int Int | OC Time Int | OutTape Int Int | Tmp [Int] deriving (Eq,Show,Read)
+newtype Time = Time {getTime :: Int}  deriving (Eq,Ord)
+data Component = PC Time Int | IC Time Int | InTape Int Int | MC Time Int | MidTape Time Int Int | OC Time Int | OutTape Int Int | Tmp [Int] deriving (Eq,Show,Read,Ord)
 data Fml a = And [Fml a] | Or [Fml a] | Not (Fml a) | Pred a deriving (Show, Read, Eq)
 type States = Fml Component
 type PC = Int
+
+instance Hashable Time where
+  hashWithSalt s k = s + (hash $ getTime k)
+
+instance Hashable Component where
+  hashWithSalt s (PC t i) = s + (hash t) + (hash i) + 9854037
+  hashWithSalt s (IC t i) = s + (hash t) + (hash i) + 4839704
+  hashWithSalt s (MC t i) = s + (hash t) + (hash i) + 1875123
+  hashWithSalt s (OC t i) = s + (hash t) + (hash i) + 8751067
+  hashWithSalt s (InTape t i) = s + (hash t) + (hash i) + 21053
+  hashWithSalt s (OutTape t i) = s + (hash t) + (hash i) + 1234532
+  hashWithSalt s (MidTape t i j) = s + (hash t) + (hash i) + (hash j) + 10234552
+  hashWithSalt s (Tmp k) = s + (hash k) + 3054521435
 
 gen :: [P.Tree] -> [Int] -> States
 gen src inTape =

@@ -30,12 +30,14 @@ create = do
   let Right ast = P.parse src
   putStrLn "To CNF..."
   let cnf = C.toCNF $ C.removeNot $ S.gen ast intape
+  putStrLn $ show $ C.toCNF (S.Or [S.Pred $ S.Tmp [0,0,0], S.Pred $ S.Tmp [1,0,0], S.Pred $ S.Tmp [2,0,0]])
   putStrLn $ show (length cnf) ++ " clauses, " ++ show (foldl (\t a -> t + length (a)) 0 cnf) ++ " literals"
   putStrLn "Aliasing..."
   let (isat, dict) = C.alias cnf
+  putStrLn $ (show $ length dict)++" uniq predicates"
   putStrLn "writ to file"
   writeFile "pred.txt" (show dict)
-  writeFile "sat.txt" (C.toDMACS isat dict)
+  C.toDMACS isat dict "sat.txt"
   putStrLn "All done, have fun."
 
 check :: IO ()
