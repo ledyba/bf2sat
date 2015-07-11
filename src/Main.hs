@@ -23,6 +23,7 @@ create = do
   let intape = [0]
   putStrLn "To CNF..."
   let cnf = C.toCNF $ C.removeNot $ S.gen ast intape
+  putStrLn $ show (length cnf) ++ " clauses, " ++ show (foldl (\t a -> t + length (a)) 0 cnf) ++ " literals"
   putStrLn "Aliasing..."
   let (isat, dict) = C.alias cnf
   putStrLn "writ to file"
