@@ -12,14 +12,13 @@ import Control.Applicative ((<$>))
 import qualified Data.List as L
 
 helloWorld :: String
-helloWorld = "+++++ +++[- >++++ ++++< ]>+++ +++++ .<+++ ++[-> +++++ <]>++"++
-             " ++.++ +++++..+++ .<"
+helloWorld = "+++++ +++[- >++++ ++++< ]>+++ +++++ .---. +++++ ++..+ ++.<"
 
 easyloop :: String
 easyloop = "++[-]"
 
 intape :: [Int]
-intape = [0]
+intape = []
 
 src :: String
 src = helloWorld
@@ -30,7 +29,6 @@ create = do
   let Right ast = P.parse src
   putStrLn "To CNF..."
   let cnf = C.toCNF $ C.removeNot $ S.gen ast intape
-  putStrLn $ show $ C.toCNF (S.Or [S.Pred $ S.Tmp [0,0,0], S.Pred $ S.Tmp [1,0,0], S.Pred $ S.Tmp [2,0,0]])
   putStrLn $ show (length cnf) ++ " clauses, " ++ show (foldl (\t a -> t + length (a)) 0 cnf) ++ " literals"
   putStrLn "Aliasing..."
   let (isat, dict) = C.alias cnf

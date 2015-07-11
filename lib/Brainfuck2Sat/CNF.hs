@@ -43,6 +43,7 @@ toCNF' addr (Or (x:y:xs))  = (zip [0..] cnfs) >>= appendFn
                           app idx nclause (cnt+1) lpos lneg
                           where
                            nclause = if idx < cnt then cl else ((if idx == cnt then pp else np):cl)
+        app _ _ _ _ _ = error "????"
 
 toCNF' addr (Not (Pred p))  = [[CNot p]]
 toCNF' _ (Pred p) = [[CAff p]]

@@ -6,9 +6,9 @@ import Data.Hashable (Hashable, hash, hashWithSalt)
 import qualified Control.Arrow as CA
 
 maxValue :: Int
-maxValue = 127
+maxValue = 80
 timeLength :: Int
-timeLength = 190
+timeLength = 134
 tapeLength :: Int
 tapeLength = 3
 outLength :: Int
