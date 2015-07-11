@@ -8,6 +8,13 @@ import Bf2Sat.RCNF as R
 import System.Environment
 import qualified Data.List as L
 
+helloWorld :: String
+helloWorld = "+++++ +++[- >++++ ++++< ]>+++ +++++ .<+++ ++[-> +++++ <]>++"++
+             " ++.++ +++++..+++ .<"
+
+easyloop :: String
+easyloop = "++[-]"
+
 main :: IO ()
 main = do
   argv <- getArgs
@@ -32,7 +39,7 @@ main = do
       print $ show r
     _ -> print "(>_<)"
   where
-    src = "++[-]"
+    src = helloWorld
     Right ast = P.parse src
     intape = [0]
     ids = E.run ast intape S.tapeLength S.timeLength

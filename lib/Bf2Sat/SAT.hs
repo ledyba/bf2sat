@@ -4,13 +4,13 @@ import Bf2Sat.Parser as P
 import qualified Control.Arrow as CA
 
 maxValue :: Int
-maxValue = 16
+maxValue = 128
 timeLength :: Int
-timeLength = 10
+timeLength = 190
 tapeLength :: Int
-tapeLength = 10
+tapeLength = 3
 outLength :: Int
-outLength = 10
+outLength = 6
 
 newtype Time = Time {getTime :: Int}  deriving (Eq)
 data Component = PC Time Int | IC Time Int | InTape Int Int | MC Time Int | MidTape Time Int Int | OC Time Int | OutTape Int Int | Tmp [Int] deriving (Eq,Show,Read)

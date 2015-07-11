@@ -23,12 +23,15 @@ fixIdx idx (LoopBegin d) = LoopBegin (d + idx + 1 + 1)
 fixIdx idx (LoopEnd d) = LoopEnd (idx - d - 1 + 1)
 fixIdx _ x = x
 
+op :: P.Parser Tree
+op = do
+   P.spaces
+   ch <- P.oneOf "><+-.,"
+   P.spaces
+   return $ ch2tree ch
+
 ops :: P.Parser [Tree]
-ops = do
-    P.spaces
-    chs <- P.many1 $ P.oneOf "><+-.,"
-    P.spaces
-    return $ fmap ch2tree chs
+ops = P.many1 op
 
 ch2tree :: Char -> Tree
 ch2tree ch =
