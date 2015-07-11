@@ -15,13 +15,25 @@ helloWorld = "+++++ +++[- >++++ ++++< ]>+++ +++++ .<+++ ++[-> +++++ <]>++"++
 easyloop :: String
 easyloop = "++[-]"
 
+create :: IO()
+create = do
+  putStrLn "Parsing..."
+  let Right ast = P.parse helloWorld
+  let intape = [0]
+  putStrLn "To CNF..."
+  let cnf = C.toCNF $ C.removeNot $ S.gen ast intape
+  putStrLn "Aliasing..."
+  let (isat, dict) = C.alias cnf
+  putStrLn "writ to file"
+  writeFile "pred.txt" (show dict)
+  writeFile "sat.txt" (C.toDMACS isat dict)
+  putStrLn "All done, have fun."
+
 main :: IO ()
 main = do
   argv <- getArgs
   case argv of
-    ("create":_) -> do
-      writeFile "sat.txt" (C.toDMACS isat dict)
-      writeFile "pred.txt" (show dict)
+    ("create":_) -> create
     ("check":_) -> do
       preds <- fmap (read :: String -> [(Int, Component)]) (readFile "pred.txt")
       ansStr <- readFile "ans.txt"
