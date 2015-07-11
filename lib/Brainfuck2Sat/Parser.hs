@@ -1,4 +1,4 @@
-module Bf2Sat.Parser (parse, Tree(..)) where
+module Brainfuck2Sat.Parser (parse, Tree(..)) where
 
 import           Text.ParserCombinators.Parsec hiding (parse)
 import qualified Text.ParserCombinators.Parsec as P

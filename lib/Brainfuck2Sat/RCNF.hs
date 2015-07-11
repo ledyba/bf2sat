@@ -1,6 +1,6 @@
-module Bf2Sat.RCNF (fromDMACS) where
+module Brainfuck2Sat.RCNF (fromDMACS) where
 
-import Bf2Sat.SAT
+import Brainfuck2Sat.SAT
 import Data.List.Split (splitOn)
 import Data.List (sortBy)
 import Data.Ord         ( comparing )

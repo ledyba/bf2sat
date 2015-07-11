@@ -1,17 +1,17 @@
-module Bf2Sat.SAT (Time(..), Component(..), Fml(..), States, gen, maxValue, outLength, tapeLength, timeLength) where
-import Bf2Sat.Parser as P
+module Brainfuck2Sat.SAT (Time(..), Component(..), Fml(..), States, gen, maxValue, outLength, tapeLength, timeLength) where
+import Brainfuck2Sat.Parser as P
 
 import Data.Monoid (mappend)
 import qualified Control.Arrow as CA
 
 maxValue :: Int
-maxValue = 128
+maxValue = 15
 timeLength :: Int
-timeLength = 190
+timeLength = 10
 tapeLength :: Int
-tapeLength = 3
+tapeLength = 10
 outLength :: Int
-outLength = 6
+outLength = 10
 
 newtype Time = Time {getTime :: Int}  deriving (Eq)
 data Component = PC Time Int | IC Time Int | InTape Int Int | MC Time Int | MidTape Time Int Int | OC Time Int | OutTape Int Int | Tmp [Int] deriving (Eq,Show,Read)

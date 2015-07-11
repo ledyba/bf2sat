@@ -1,7 +1,7 @@
-module Bf2Sat.Debug (eval, valuation) where
+module Brainfuck2Sat.Debug (eval, valuation) where
 
-import Bf2Sat.SAT
-import Bf2Sat.Engine
+import Brainfuck2Sat.SAT
+import Brainfuck2Sat.Engine
 
 eval' :: Component -> [Int] -> [ID] -> Bool
 eval' (PC t pc) _ ids = getPC (ids !! getTime t) == pc

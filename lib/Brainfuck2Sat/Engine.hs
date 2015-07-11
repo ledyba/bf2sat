@@ -1,6 +1,6 @@
-module Bf2Sat.Engine (run, ID(..)) where
+module Brainfuck2Sat.Engine (run, ID(..)) where
 
-import Bf2Sat.Parser (Tree(..))
+import Brainfuck2Sat.Parser (Tree(..))
 
 data ID = ID {
   getPC :: Int,

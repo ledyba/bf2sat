@@ -1,9 +1,11 @@
-import Bf2Sat.Parser as P
-import Bf2Sat.SAT as S
-import Bf2Sat.Engine as E
-import Bf2Sat.Debug as D
-import Bf2Sat.CNF as C
-import Bf2Sat.RCNF as R
+module Main where
+
+import Brainfuck2Sat.Parser as P
+import Brainfuck2Sat.SAT as S
+import Brainfuck2Sat.Engine as E
+import Brainfuck2Sat.Debug as D
+import Brainfuck2Sat.CNF as C
+import Brainfuck2Sat.RCNF as R
 
 import System.Environment
 import Control.Applicative ((<$>))
@@ -20,7 +22,7 @@ intape :: [Int]
 intape = [0]
 
 src :: String
-src = helloWorld
+src = easyloop
 
 create :: IO()
 create = do
