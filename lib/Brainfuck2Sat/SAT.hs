@@ -49,14 +49,14 @@ instance Hashable Time where
   hashWithSalt s k = s + hash (getTime k)
 
 instance Hashable Component where
-  hashWithSalt s (PC t i) = s +　hash t + hash i + 9854037
-  hashWithSalt s (IC t i) = s +　hash t + hash i + 4839704
-  hashWithSalt s (MC t i) = s + hash t + hash i + 1875123
-  hashWithSalt s (OC t i) = s + hash t + hash i + 8751067
-  hashWithSalt s (InTape t i) = s + hash t + hash i + 21053
-  hashWithSalt s (OutTape t i) = s + hash t + hash i + 1234532
-  hashWithSalt s (MidTape t i j) = s + hash t + hash i + hash j + 10234552
-  hashWithSalt s (Tmp k) = s + hash k + 3054521435
+  hashWithSalt s (PC t i) = s +　hash t + hash i + 98540371
+  hashWithSalt s (IC t i) = s +　hash t + hash i + 48397042
+  hashWithSalt s (MC t i) = s + hash t + hash i + 18751233
+  hashWithSalt s (OC t i) = s + hash t + hash i + 87510674
+  hashWithSalt s (InTape t i) = s + hash t + hash i + 210535
+  hashWithSalt s (OutTape t i) = s + hash t + hash i + 12345326
+  hashWithSalt s (MidTape t i j) = s + hash t + hash i + hash j + 102345527
+  hashWithSalt s (Tmp k) = s + hash k + 30545214358
 instance Show Time where
   showsPrec d t = showsPrec d (getTime t)
 
