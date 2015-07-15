@@ -8,7 +8,7 @@ import qualified Control.Arrow as CA
 --------------------------------------------------------------------------------
 
 timeLen :: Int
-timeLen = 20
+timeLen = 140
 
 valueBits :: Int
 valueBits = 8
