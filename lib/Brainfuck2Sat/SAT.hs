@@ -8,7 +8,7 @@ import qualified Control.Arrow as CA
 --------------------------------------------------------------------------------
 
 timeLen :: Int
-timeLen = 140
+timeLen = 20
 
 valueBits :: Int
 valueBits = 8
@@ -57,6 +57,7 @@ instance Hashable Component where
   hashWithSalt s (OutTape t i) = s + hash t + hash i + 12345326
   hashWithSalt s (MidTape t i j) = s + hash t + hash i + hash j + 102345527
   hashWithSalt s (Tmp k) = s + hash k + 30545214358
+
 instance Show Time where
   showsPrec d t = showsPrec d (getTime t)
 
@@ -205,13 +206,15 @@ incIC :: Int -> Time -> Time -> [Int] -> States
 incIC inLenBits from to = makeInc (IC from) (IC to) inLenBits
 incOC :: Time -> Time -> [Int] -> States
 incOC from to = makeInc (OC from) (OC to) outLenBits
+
 incMC :: Time -> Time -> [Int] -> States
-incMC from to = makeInc (OC from) (OC to) tapeLenBits
+incMC from to = makeInc (MC from) (MC to) tapeLenBits
+
 decMC :: Time -> Time -> [Int] -> States
-decMC from to = makeInc (MC from) (MC to) tapeLenBits
+decMC from to = makeDec (MC from) (MC to) tapeLenBits
 
 readInput :: Int -> Int -> Time -> Time -> States
-readInput inLen inLenBits from to = Or $ fmap (\(mi,ii) -> And [isConst (MC from) tapeLenBits mi, makeConst (IC to) inLenBits ii, keepMidTapeElse from to mi, makeEq (MidTape to mi) (InTape ii) valueBits]) (prod [0..(tapeLen-1)] [0..(inLen-1)])
+readInput inLen inLenBits from to = Or $ fmap (\(mi,ii) -> And [isConst (MC from) tapeLenBits mi, makeConst (IC from) inLenBits ii, keepMidTapeElse from to mi, makeEq (MidTape to mi) (InTape ii) valueBits]) (prod [0..(tapeLen-1)] [0..(inLen-1)])
 
 printOutput :: Time -> States
 printOutput from = Or $ fmap (\(mi,oi) -> And [isConst (MC from) tapeLenBits mi, isConst (OC from) outLenBits oi, makeEq (MidTape from mi) (OutTape oi) valueBits]) (prod [0..(tapeLen-1)] [0..(outLen-1)])

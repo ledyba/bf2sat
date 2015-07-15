@@ -15,14 +15,14 @@ helloWorld :: String
 helloWorld = "+++++ +++[- >++++ ++++< ]>+++ +++++ .---. +++++ ++..+ ++.<"
 
 easyloop :: String
-easyloop = "++++[-]"
+easyloop = ">+[<,.>-]"
 
 intape :: [Int]
 intape = [0,0,0,0]
 
 src :: String
-src = helloWorld
---src = easyloop
+--src = helloWorld
+src = easyloop
 
 create :: IO()
 create = do
@@ -59,9 +59,10 @@ test = do
   let ids = E.run ast intape S.tapeLen S.timeLen
   let sat = S.gen ast intape
   let r = D.eval  sat intape ids
-  print $ show src
+  print $ show ast
+  print $ show intape
   putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> show idx ++ ": " ++ show it) (zip ([0.. ] :: [Int]) ids)
-  print $ show sat
+  --print $ show sat
   print $ show r
 
 main :: IO ()

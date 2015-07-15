@@ -20,8 +20,9 @@ fixMem mem pt delta = fixMem' mem pt delta []
 
 setMem' ::[Int] -> Int -> Int -> [Int] -> [Int]
 setMem' [] _ _ acc = reverse acc
-setMem' (x:xs) 0 delta acc = reverse acc ++ [x + delta] ++ xs
-setMem' (x:xs) pt delta acc = setMem' xs (pt-1) delta (x:acc)
+setMem' (_:xs) 0 val acc = reverse acc ++ [val] ++ xs
+setMem' (x:xs) pt val acc = setMem' xs (pt-1) val (x:acc)
+
 setMem :: [Int] -> Int -> Int -> [Int]
 setMem mem pt delta = setMem' mem pt delta []
 
