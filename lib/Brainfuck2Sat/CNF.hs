@@ -1,6 +1,6 @@
 {-# LANGUAGE ExplicitForAll #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Brainfuck2Sat.CNF (removeNot, toCNF, alias, toDMACS) where
+module Brainfuck2Sat.CNF (CFml(..),removeNot, toCNF, alias, toDMACS) where
 
 import Brainfuck2Sat.SAT
 import qualified Data.HashMap.Strict as M

@@ -1,11 +1,11 @@
 module Main where
 
-import Brainfuck2Sat.Parser as P
-import Brainfuck2Sat.SAT as S
-import Brainfuck2Sat.Engine as E
-import Brainfuck2Sat.Debug as D
-import Brainfuck2Sat.CNF as C
-import Brainfuck2Sat.RCNF as R
+import qualified Brainfuck2Sat.Parser as P
+import qualified Brainfuck2Sat.SAT as S
+import qualified Brainfuck2Sat.Engine as E
+import qualified Brainfuck2Sat.Debug as D
+import qualified Brainfuck2Sat.CNF as C
+import qualified Brainfuck2Sat.RCNF as R
 
 import System.Environment
 import Control.Applicative ((<$>))
@@ -24,17 +24,27 @@ src :: String
 src = helloWorld
 --src = easyloop
 
+makeCNF :: [P.Tree] -> IO [[C.CFml S.Component]]
+makeCNF ast = do
+  putStrLn "To CNF..."
+  let cnf = C.toCNF $ C.removeNot $ S.gen ast intape
+  putStrLn $ show (length cnf) ++ " clauses, " ++ show (foldl (\t a -> t + length a) 0 cnf) ++ " literals"
+  return cnf
+
+makeSAT :: [P.Tree] -> IO ([[Int]], [(Int, S.Component)])
+makeSAT ast = do
+  cnf <- makeCNF ast
+  putStrLn "Aliasing..."
+  let (isat, dict) = C.alias cnf
+  putStrLn $ show (length dict)++" uniq predicates"
+  putStrLn "writ to file"
+  return (isat,dict)
+
 create :: IO()
 create = do
   putStrLn "Parsing..."
   let Right ast = P.parse src
-  putStrLn "To CNF..."
-  let cnf = C.toCNF $ C.removeNot $ S.gen ast intape
-  putStrLn $ show (length cnf) ++ " clauses, " ++ show (foldl (\t a -> t + length a) 0 cnf) ++ " literals"
-  putStrLn "Aliasing..."
-  let (isat, dict) = C.alias cnf
-  putStrLn $ (show $ length dict)++" uniq predicates"
-  putStrLn "writ to file"
+  (isat, dict) <- makeSAT ast
   writeFile "pred.txt" (show dict)
   C.toDMACS isat dict "sat.txt"
   putStrLn "All done, have fun."
@@ -43,7 +53,7 @@ check :: IO ()
 check = do
   let Right ast = P.parse src
   let ids = E.run ast intape S.tapeLen S.timeLen
-  preds <- fmap (read :: String -> [(Int, Component)]) (readFile "pred.txt")
+  preds <- fmap (read :: String -> [(Int, S.Component)]) (readFile "pred.txt")
   ansStr <- readFile "ans.txt"
   let ans = R.fromDMACS preds ansStr
   let val = D.valuation (fmap fst ans) intape ids
