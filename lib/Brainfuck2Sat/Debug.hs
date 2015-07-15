@@ -2,16 +2,17 @@ module Brainfuck2Sat.Debug (eval, valuation) where
 
 import Brainfuck2Sat.SAT
 import Brainfuck2Sat.Engine
+import Data.Bits
 
 eval' :: Component -> [Int] -> [ID] -> Bool
-eval' (PC t pc) _ ids = getPC (ids !! getTime t) == pc
-eval' (IC t ic) _ ids = getIC (ids !! getTime t) == ic
-eval' (InTape idx v) inTape _ = (inTape !! idx) == v
-eval' (MC t pt) _ ids = getPT (ids !! getTime t) == pt
-eval' (MidTape t pt v) _ ids = (getMem (ids !! getTime t) !! pt) == v
-eval' (OC t oc) _ ids = getOC (ids !! getTime t) == oc
-eval' (OutTape idx v) _ ids = if idx < length tape then (tape !! idx) == v
-                              else v == 0
+eval' (PC t pc) _ ids = testBit (getPC (ids !! getTime t)) pc
+eval' (IC t ic) _ ids = testBit (getIC (ids !! getTime t)) ic
+eval' (InTape idx v) inTape _ = testBit (inTape !! idx) v
+eval' (MC t pt) _ ids = testBit (getPT (ids !! getTime t)) pt
+eval' (MidTape t pt v) _ ids = testBit (getMem (ids !! getTime t) !! pt) v
+eval' (OC t oc) _ ids = testBit (getOC (ids !! getTime t)) oc
+eval' (OutTape idx v) _ ids = if idx < length tape then testBit (tape !! idx) v
+                              else False
                               where tape = getOut (last ids)
 eval' (Tmp _) _ _ = error "you can't eval temporary value"
 

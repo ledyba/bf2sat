@@ -5,7 +5,6 @@ module Brainfuck2Sat.CNF (removeNot, toCNF, alias, toDMACS) where
 import Brainfuck2Sat.SAT
 import qualified Data.HashMap as M
 import Data.HashMap ((!))
-import qualified Data.List as L
 import qualified Data.Witherable as W
 import System.IO (withFile, IOMode( WriteMode ), Handle, hPutStr, hPutChar)
 import Data.Hashable (Hashable, hash, hashWithSalt)
@@ -38,19 +37,19 @@ toCNF' addr (Or (x:y:xs))  = (zip [0..] cnfs) >>= appendFn
         pos = fmap CAff tmps
         neg = fmap CNot tmps
         appendFn (idx, cls) = fmap (\cl -> app idx cl 0 pos neg) cls
-        app _ cl x _ _ | x >= ntmps = cl
+        app _ cl n _ _ | n >= ntmps = cl
         app idx cl (cnt::Int) (pp:lpos) (np:lneg) =
                           app idx nclause (cnt+1) lpos lneg
                           where
                            nclause = if idx < cnt then cl else ((if idx == cnt then pp else np):cl)
         app _ _ _ _ _ = error "????"
 
-toCNF' addr (Not (Pred p))  = [[CNot p]]
+toCNF' _ (Not (Pred p))  = [[CNot p]]
 toCNF' _ (Pred p) = [[CAff p]]
 toCNF' _ (Not _) = fail "????"
 
 toCNF :: Fml Component -> [[CFml Component]]
-toCNF xs = toCNF' [] xs
+toCNF xs = toCNF' [1] xs
 
 alias :: [[CFml Component]] -> ([[Int]], [(Int, Component)])
 alias cnf = (fmap (fmap term2int) cnf, fmap swap $ M.toList dict)

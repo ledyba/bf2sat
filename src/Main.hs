@@ -18,10 +18,10 @@ easyloop :: String
 easyloop = "++[-]"
 
 intape :: [Int]
-intape = []
+intape = [0,0,0,0]
 
 src :: String
-src = helloWorld
+src = easyloop
 
 create :: IO()
 create = do
@@ -41,7 +41,7 @@ create = do
 check :: IO ()
 check = do
   let Right ast = P.parse src
-  let ids = E.run ast intape S.tapeLength S.timeLength
+  let ids = E.run ast intape S.tapeLen S.timeLen
   preds <- fmap (read :: String -> [(Int, Component)]) (readFile "pred.txt")
   ansStr <- readFile "ans.txt"
   let ans = R.fromDMACS preds ansStr
@@ -49,18 +49,18 @@ check = do
   print $ "Exec " ++ show (length ids) ++ " Steps"
   let pairs = (\((p1,a),(p2,v)) -> if p1 == p2 then (p1,a,v) else error "???" ) <$> zip ans val
   let notmatched = filter (\(_,a,v) -> a /= v) pairs
-  print $ "Do not match: " ++ show (length notmatched) ++ " items"
-  print notmatched
+  putStrLn $ "Do not match: " ++ show (length notmatched) ++ " items"
+  mapM_ (\(cmp, a, v) -> putStrLn $ "(" ++ show cmp ++ ") / actual: "++ show a ++ " expected: "++ show v) notmatched
 
 test :: IO ()
 test = do
   let Right ast = P.parse src
-  let ids = E.run ast intape S.tapeLength S.timeLength
+  let ids = E.run ast intape S.tapeLen S.timeLen
   let sat = S.gen ast intape
   let r = D.eval  sat intape ids
   print $ show src
   putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> show idx ++ ": " ++ show it) (zip ([0.. ] :: [Int]) ids)
-  -- print $ show sat
+  print $ show sat
   print $ show r
 
 main :: IO ()
