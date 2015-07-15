@@ -5,6 +5,7 @@ module Brainfuck2Sat.CNF (removeNot, toCNF, alias, toDMACS) where
 import Brainfuck2Sat.SAT
 import qualified Data.HashMap as M
 import Data.HashMap ((!))
+import Control.Applicative ((<$>))
 import System.IO (withFile, IOMode( WriteMode ), Handle, hPutStr, hPutChar)
 import Data.Hashable (Hashable, hash, hashWithSalt)
 import Data.Tuple (swap)
