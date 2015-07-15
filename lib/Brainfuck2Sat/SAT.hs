@@ -8,22 +8,22 @@ import qualified Control.Arrow as CA
 --------------------------------------------------------------------------------
 
 timeLen :: Int
-timeLen = 10
+timeLen = 140
 
 valueBits :: Int
-valueBits = 2
+valueBits = 7
 
 valueMax :: Int
 valueMax = (2 ^ valueBits)-1
 
 tapeLenBits :: Int
-tapeLenBits = 2
+tapeLenBits = 4
 
 tapeLen :: Int
 tapeLen = 2 ^ tapeLenBits
 
 outLenBits :: Int
-outLenBits = 2
+outLenBits = 4
 
 outLen :: Int
 outLen = 2 ^ outLenBits
