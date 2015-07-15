@@ -54,10 +54,9 @@ toCNF = toCNF' [1]
 alias' :: (M.HashMap Component Int, Int) -> [CFml Component] -> (M.HashMap Component Int,Int)
 alias' = foldl f
     where
-          f (dict,ncnt) fml = if found then (dict,ncnt) else (M.insert key ncnt dict,ncnt+1)
+          f (dict,ncnt) fml = if M.member key dict then (dict,ncnt) else (M.insert key ncnt dict,ncnt+1)
             where
               key = getFml fml
-              found = M.member key dict
           getFml (CNot a) = a
           getFml (CAff a) = a
 

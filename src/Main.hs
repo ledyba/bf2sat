@@ -15,13 +15,14 @@ helloWorld :: String
 helloWorld = "+++++ +++[- >++++ ++++< ]>+++ +++++ .---. +++++ ++..+ ++.<"
 
 easyloop :: String
-easyloop = "++[-]"
+easyloop = "++++[-]"
 
 intape :: [Int]
 intape = [0,0,0,0]
 
 src :: String
-src = helloWorld
+--src = helloWorld
+src = easyloop
 
 create :: IO()
 create = do
@@ -29,7 +30,7 @@ create = do
   let Right ast = P.parse src
   putStrLn "To CNF..."
   let cnf = C.toCNF $ C.removeNot $ S.gen ast intape
-  putStrLn $ show (length cnf) ++ " clauses, " ++ show (foldl (\t a -> t + length (a)) 0 cnf) ++ " literals"
+  putStrLn $ show (length cnf) ++ " clauses, " ++ show (foldl (\t a -> t + length a) 0 cnf) ++ " literals"
   putStrLn "Aliasing..."
   let (isat, dict) = C.alias cnf
   putStrLn $ (show $ length dict)++" uniq predicates"
@@ -60,7 +61,7 @@ test = do
   let r = D.eval  sat intape ids
   print $ show src
   putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> show idx ++ ": " ++ show it) (zip ([0.. ] :: [Int]) ids)
-  -- print $ show sat
+  print $ show sat
   print $ show r
 
 main :: IO ()
