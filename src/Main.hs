@@ -21,8 +21,8 @@ intape :: [Int]
 intape = [0,0,0,0]
 
 src :: String
---src = helloWorld
-src = easyloop
+src = helloWorld
+--src = easyloop
 
 create :: IO()
 create = do
