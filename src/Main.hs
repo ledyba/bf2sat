@@ -60,7 +60,7 @@ test = do
   let r = D.eval  sat intape ids
   print $ show src
   putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> show idx ++ ": " ++ show it) (zip ([0.. ] :: [Int]) ids)
-  print $ show sat
+  -- print $ show sat
   print $ show r
 
 main :: IO ()

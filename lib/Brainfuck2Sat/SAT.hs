@@ -17,13 +17,13 @@ valueMax :: Int
 valueMax = (2 ^ valueBits)-1
 
 tapeLenBits :: Int
-tapeLenBits = 4
+tapeLenBits = 2
 
 tapeLen :: Int
 tapeLen = 2 ^ tapeLenBits
 
 outLenBits :: Int
-outLenBits = 4
+outLenBits = 3
 
 outLen :: Int
 outLen = 2 ^ outLenBits
