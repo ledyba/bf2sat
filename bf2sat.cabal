@@ -27,7 +27,7 @@ Library
             Brainfuck2Sat.CNF
             Brainfuck2Sat.RCNF
   hs-source-dirs:       lib
-  Build-Depends:        base,parsec >= 3, containers, witherable, split, hashable, hashmap
+  Build-Depends:        base,parsec >= 3, containers, witherable, split, hashable, unordered-containers
 
 executable bf2sat
   main-is:             Main.hs

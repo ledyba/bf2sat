@@ -3,8 +3,8 @@
 module Brainfuck2Sat.CNF (removeNot, toCNF, alias, toDMACS) where
 
 import Brainfuck2Sat.SAT
-import qualified Data.HashMap as M
-import Data.HashMap ((!))
+import qualified Data.HashMap.Strict as M
+import Data.HashMap.Strict ((!))
 import Control.Applicative ((<$>))
 import System.IO (withFile, IOMode( WriteMode ), Handle, hPutStr, hPutChar)
 import Data.Hashable (Hashable, hash, hashWithSalt)
