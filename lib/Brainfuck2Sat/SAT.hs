@@ -1,4 +1,4 @@
-module Brainfuck2Sat.SAT (Time(..), Component(..), Fml(..), States, gen, valueMax, outLen, tapeLen, timeLen) where
+module Brainfuck2Sat.SAT (Time(..), Component(..), Fml(..), States, gen, outLen, tapeLen, timeLen) where
 import Brainfuck2Sat.Parser as P
 
 import Control.Applicative ((<$>))
@@ -12,9 +12,6 @@ timeLen = 140
 
 valueBits :: Int
 valueBits = 7
-
-valueMax :: Int
-valueMax = (2 ^ valueBits)-1
 
 tapeLenBits :: Int
 tapeLenBits = 2
