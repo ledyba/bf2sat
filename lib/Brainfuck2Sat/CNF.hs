@@ -1,6 +1,6 @@
 {-# LANGUAGE ExplicitForAll #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Brainfuck2Sat.CNF (CFml(..),removeNot, toCNF, alias, toDMACS) where
+module Brainfuck2Sat.CNF (CFml(..),removeNot, toCNF, makeAlias, toDMACS) where
 
 import Brainfuck2Sat.SAT
 import qualified Data.HashMap.Strict as M
@@ -51,8 +51,8 @@ toCNF' _ (Not _) = fail "????"
 toCNF :: Fml Component -> [[CFml Component]]
 toCNF = toCNF' [1]
 
-alias' :: (M.HashMap Component Int, Int) -> [CFml Component] -> (M.HashMap Component Int,Int)
-alias' = foldl f
+makeAlias' :: (M.HashMap Component Int, Int) -> [CFml Component] -> (M.HashMap Component Int,Int)
+makeAlias' = foldl f
     where
           f (dict,ncnt) fml = if M.member key dict then (dict,ncnt) else (M.insert key ncnt dict,ncnt+1)
             where
@@ -60,10 +60,10 @@ alias' = foldl f
           getFml (CNot a) = a
           getFml (CAff a) = a
 
-alias :: [[CFml Component]] -> ([[Int]], [(Int, Component)])
-alias cnf = (ints, fmap swap lists)
+makeAlias :: [[CFml Component]] -> ([[Int]], [(Int, Component)])
+makeAlias cnf = (ints, fmap swap lists)
   where
-    (dict,_) = foldl alias' (M.empty,1) cnf
+    (dict,_) = foldl makeAlias' (M.empty,1) cnf
     ints = fmap (fmap term2int) cnf
     lists = M.toList dict
     term2int :: CFml Component -> Int

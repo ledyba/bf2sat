@@ -35,7 +35,7 @@ makeSAT :: [P.Tree] -> IO ([[Int]], [(Int, S.Component)])
 makeSAT ast = do
   cnf <- makeCNF ast
   putStrLn "Aliasing..."
-  let (isat, dict) = C.alias cnf
+  let (isat, dict) = C.makeAlias cnf
   putStrLn $ show (length dict)++" uniq predicates"
   putStrLn "writ to file"
   return (isat,dict)
