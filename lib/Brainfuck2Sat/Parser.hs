@@ -7,11 +7,21 @@ data Source = Source {
   getAST :: [Tree],
   getInTape :: [Int],
   getValueBits :: Int,
-  getOutAddrBits :: Int,
   getAddrBits :: Int,
+  getOutAddrBits :: Int,
   getSimStep :: Int
-} deriving (Show)
+}
 data Tree = PtInc | PtDec | ValInc | ValDec | PutC | GetC | LoopBegin Int | LoopEnd Int deriving (Show, Eq)
+
+instance Show Source where
+  show (Source ast intape valueBits addrBits outAddrBits simSteps) =
+        "----\n  src:" ++ show ast ++
+        "\n  in: " ++ show intape ++
+        "\n  value-bits: " ++ show valueBits ++
+        "\n  addr-bits:" ++ show addrBits ++
+        "\n  out-addr-bits:" ++ show outAddrBits ++
+        "\n  sim-steps:" ++ show simSteps ++
+        "\n----"
 
 flattenList :: [[a']] -> [a']
 flattenList = concat
@@ -20,39 +30,41 @@ parse :: FilePath -> String -> Either ParseError Source
 parse = P.parse parseBody
 
 parseBody :: Parser Source
-parseBody = parseHead' $ Source [] [] 8 4 4 4
+parseBody = parseBody' $ Source [] [] 8 4 4 4
   where
-    parseHead' src = choice [readHead src, readSource src]
-    readHead src = choice [readInTape src, readValueBits src, readOutAddrBits src, readAddrBits src, readSimSteps src]
+    parseBody' src = choice [readHead src, readSource src]
+    readHead src = do
+      next <- choice [readInTape src, readValueBits src, readOutAddrBits src, readAddrBits src, readSimSteps src]
+      parseBody' next
     readSource src = do
       P.spaces
       ast <- brainfuck
-      return $ Source ast (getInTape src) (getValueBits src) (getOutAddrBits src) (getAddrBits src) (getSimStep src)
+      return $ Source ast (getInTape src) (getValueBits src) (getAddrBits src) (getOutAddrBits src) (getSimStep src)
 
 readInTape :: Source -> Parser Source
 readInTape src = do
   v <- readL "in:" "[]-., 0123456789abcdefABCDEFXx"
-  return $ Source (getAST src) (read v) (getValueBits src) (getOutAddrBits src) (getAddrBits src) (getSimStep src)
+  return $ Source (getAST src) (read v) (getValueBits src) (getAddrBits src) (getOutAddrBits src) (getSimStep src)
 
 readValueBits :: Source -> Parser Source
 readValueBits src = do
   v <- readL "value-bits:" "0123456789"
-  return $ Source (getAST src) (getInTape src) (read v) (getOutAddrBits src) (getAddrBits src) (getSimStep src)
+  return $ Source (getAST src) (getInTape src) (read v) (getAddrBits src) (getOutAddrBits src) (getSimStep src)
 
 readOutAddrBits :: Source -> Parser Source
 readOutAddrBits src = do
   v <- readL "out-addr-bits:" "0123456789"
-  return $ Source (getAST src) (getInTape src) (getValueBits src) (read v) (getAddrBits src) (getSimStep src)
+  return $ Source (getAST src) (getInTape src) (getValueBits src) (getAddrBits src) (read v) (getSimStep src)
 
 readAddrBits :: Source -> Parser Source
 readAddrBits src = do
   v <- readL "addr-bits:" "0123456789"
-  return $ Source (getAST src) (getInTape src) (getValueBits src) (getOutAddrBits src) (read v) (getSimStep src)
+  return $ Source (getAST src) (getInTape src) (getValueBits src) (read v) (getOutAddrBits src) (getSimStep src)
 
 readSimSteps :: Source -> Parser Source
 readSimSteps src = do
   v <- readL "steps:" "0123456789"
-  return $ Source (getAST src) (getInTape src) (getValueBits src) (getOutAddrBits src) (getAddrBits src) (read v)
+  return $ Source (getAST src) (getInTape src) (getValueBits src) (getAddrBits src) (getOutAddrBits src) (read v)
 
 readL :: String -> String -> Parser String
 readL name vs = do

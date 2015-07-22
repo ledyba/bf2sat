@@ -14,7 +14,8 @@ import qualified Data.List as L
 makeCNF :: P.Source -> IO [[C.CFml S.Component]]
 makeCNF src = do
   putStrLn "To CNF..."
-  let cnf = C.toCNF $ C.removeNot $ S.gen src
+  let sat = S.gen src
+  let cnf = C.toCNF $ C.removeNot sat
   putStrLn $ show (length cnf) ++ " clauses, " ++ show (foldl (\t a -> t + length a) 0 cnf) ++ " literals"
   return cnf
 
@@ -37,6 +38,7 @@ withSource fpath cont = do
 
 create :: FilePath -> IO()
 create fname = withSource fname $ \ src -> do
+  print src
   (isat, dict) <- makeSAT src
   writeFile "pred.txt" (show dict)
   C.toDMACS isat dict "sat.txt"
