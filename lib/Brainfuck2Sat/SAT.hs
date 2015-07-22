@@ -1,29 +1,9 @@
-module Brainfuck2Sat.SAT (Time(..), Component(..), Fml(..), States, gen, outLen, tapeLen, timeLen) where
-import Brainfuck2Sat.Parser as P
+module Brainfuck2Sat.SAT (Time(..), Component(..), Fml(..), States, gen) where
+import Brainfuck2Sat.Parser (Tree(..), Source(..))
 
 import Control.Applicative ((<$>))
 import Data.Hashable (Hashable, hash, hashWithSalt)
 import qualified Control.Arrow as CA
-
---------------------------------------------------------------------------------
-
-timeLen :: Int
-timeLen = 140
-
-valueBits :: Int
-valueBits = 7
-
-tapeLenBits :: Int
-tapeLenBits = 2
-
-tapeLen :: Int
-tapeLen = 2 ^ tapeLenBits
-
-outLenBits :: Int
-outLenBits = 3
-
-outLen :: Int
-outLen = 2 ^ outLenBits
 
 --------------------------------------------------------------------------------
 
@@ -76,22 +56,20 @@ prod a b = concat $ fmap ( \it1 -> fmap (\it2 -> (it1,it2) ) b ) a
 
 --------------------------------------------------------------------------------
 
-gen :: [P.Tree] -> [Int] -> States
-gen src inTape =
+gen :: Source -> States
+gen src =
             And [
-              genInitState progLen inTape
-              ,genMiddleState src inTapeLength
-              ,genLastState progLen
-            ] where
-              progLen = length src
-              inTapeLength = length inTape
+              genInitState src
+              ,genMiddleState src
+              ,genLastState src
+            ]
 
 
 t0 :: Time
 t0 = Time 0
 
-lastTime :: Time
-lastTime = Time (timeLen-1)
+lastTime :: Source -> Time
+lastTime src = Time (getSimStep src - 1)
 
 --------------------------------------------------------------------------------
 
@@ -133,11 +111,17 @@ isZero type_ bitLength = And $ Not . Pred . type_ <$> [0..bitLength-1]
 notZero :: (Int -> Component) -> Int -> Fml Component
 notZero type_ bitLength = Or $ Pred . type_ <$> [0..bitLength-1]
 
-genInitState :: Int -> [Int] -> States
-genInitState progLen inTape =
+genInitState :: Source -> States
+genInitState src =
                     And [pc, ic, it, mc, oc, mt]
                     where
+                      inTape = getInTape src
+                      tapeLenBits = getAddrBits src
+                      outLenBits = getOutAddrBits src
+                      valueBits = getValueBits src
+                      tapeLen = 2 ^ tapeLenBits
                       inLenBits = calcBitLength (length inTape)
+                      progLen = length $ getAST src
                       progLenBits = calcBitLength progLen
                       pc = isZero (PC t0) progLenBits
                       ic = isZero (IC t0) inLenBits
@@ -167,113 +151,130 @@ makeDec from_ to_ bitLength addr =
                 And [Not $ Pred $ Tmp ((bidx-1):addr), makeEqP (from_ bidx) (to_ bidx), Not $ Pred $ Tmp $ bidx:addr]
               ]) <$> [1..bitLength-1])
 
-keepMidTape :: Time -> Time -> States
-keepMidTape from to = And $ (\mc -> makeEq (MidTape from mc) (MidTape to mc) valueBits) <$> [0..(tapeLen-1)]
+keepMidTape :: Int -> Int -> Time -> Time -> States
+keepMidTape valueBits tapeLen from to = And $ (\mc -> makeEq (MidTape from mc) (MidTape to mc) valueBits) <$> [0..(tapeLen-1)]
 
-keepMidTapeElse :: Time -> Time -> Int -> States
-keepMidTapeElse from to notUsed = And $ (\mc -> makeEq (MidTape from mc) (MidTape to mc) valueBits) <$> filter (/= notUsed) [0..(tapeLen-1)]
+keepMidTapeElse :: Int -> Int -> Time -> Time -> Int -> States
+keepMidTapeElse valueBits tapeLen from to notUsed = And $ (\mc -> makeEq (MidTape from mc) (MidTape to mc) valueBits) <$> filter (/= notUsed) [0..(tapeLen-1)]
 
-incMidTape :: Time -> Time -> [Int] -> States
-incMidTape from to addr = Or $ fmap each [0..tapeLen-1]
+incMidTape :: Int -> (Int,Int) -> Time -> Time -> [Int] -> States
+incMidTape valueBits (tapeLen,tapeLenBits) from to addr = Or $ fmap each [0..tapeLen-1]
   where
-    each idx = And [isConst (MC from) tapeLenBits idx,makeInc (MidTape from idx) (MidTape to idx) valueBits addr, keepMidTapeElse from to idx]
+    each idx = And [isConst (MC from) tapeLenBits idx,makeInc (MidTape from idx) (MidTape to idx) valueBits addr, keepMidTapeElse valueBits tapeLen from to idx]
 
-decMidTape :: Time -> Time -> [Int] -> States
-decMidTape from to addr = Or $ fmap each [0..tapeLen-1]
+decMidTape :: Int -> (Int,Int) -> Time -> Time -> [Int] -> States
+decMidTape valueBits (tapeLen,tapeLenBits) from to addr = Or $ fmap each [0..tapeLenBits-1]
   where
-    each idx = And [isConst (MC from) tapeLenBits idx,makeDec (MidTape from idx) (MidTape to idx) valueBits addr, keepMidTapeElse from to idx]
+    each idx = And [isConst (MC from) tapeLenBits idx,makeDec (MidTape from idx) (MidTape to idx) valueBits addr, keepMidTapeElse valueBits tapeLen from to idx]
 
 --
 keepSC :: Int -> (Time->Int->Component) -> Time -> Time -> States
 keepSC bitLength cons from to = makeEq (cons from) (cons to) bitLength
 
-keepOC :: Time -> Time -> States
-keepOC = keepSC outLenBits OC
+keepOC :: Int -> Time -> Time -> States
+keepOC outLenBits = keepSC outLenBits OC
 
 keepIC :: Int -> Time -> Time -> States
 keepIC inLenBits = keepSC inLenBits IC
 
-keepMC :: Time -> Time -> States
-keepMC = keepSC tapeLenBits MC
+keepMC :: Int -> Time -> Time -> States
+keepMC tapeLenBits = keepSC tapeLenBits MC
 
 keepPC :: Int -> Time -> Time -> States
 keepPC pcLenBits = keepSC pcLenBits PC
 
 incIC :: Int -> Time -> Time -> [Int] -> States
 incIC inLenBits from to = makeInc (IC from) (IC to) inLenBits
-incOC :: Time -> Time -> [Int] -> States
-incOC from to = makeInc (OC from) (OC to) outLenBits
 
-incMC :: Time -> Time -> [Int] -> States
-incMC from to = makeInc (MC from) (MC to) tapeLenBits
+incOC :: Int -> Time -> Time -> [Int] -> States
+incOC outLenBits from to = makeInc (OC from) (OC to) outLenBits
 
-decMC :: Time -> Time -> [Int] -> States
-decMC from to = makeDec (MC from) (MC to) tapeLenBits
+incMC :: Int -> Time -> Time -> [Int] -> States
+incMC tapeLenBits from to = makeInc (MC from) (MC to) tapeLenBits
 
-readInput :: Int -> Int -> Time -> Time -> States
-readInput inLen inLenBits from to = Or $ fmap (\(mi,ii) -> And [isConst (MC from) tapeLenBits mi, makeConst (IC from) inLenBits ii, keepMidTapeElse from to mi, makeEq (MidTape to mi) (InTape ii) valueBits]) (prod [0..(tapeLen-1)] [0..(inLen-1)])
+decMC :: Int -> Time -> Time -> [Int] -> States
+decMC tapeLenBits from to = makeDec (MC from) (MC to) tapeLenBits
 
-printOutput :: Time -> States
-printOutput from = Or $ fmap (\(mi,oi) -> And [isConst (MC from) tapeLenBits mi, isConst (OC from) outLenBits oi, makeEq (MidTape from mi) (OutTape oi) valueBits]) (prod [0..(tapeLen-1)] [0..(outLen-1)])
+readInput :: (Int,Int) -> (Int,Int) -> Int -> Time -> Time -> States
+readInput (inLen,inLenBits) (tapeLen,tapeLenBits) valueBits from to = Or $ fmap (\(mi,ii) -> And [isConst (MC from) tapeLenBits mi, makeConst (IC from) inLenBits ii, keepMidTapeElse valueBits tapeLen from to mi, makeEq (MidTape to mi) (InTape ii) valueBits]) (prod [0..(tapeLen-1)] [0..(inLen-1)])
 
-acceptRule :: Int -> Int -> Time -> States
-acceptRule progLen inLength t =
+printOutput :: (Int,Int) -> (Int,Int) -> Int -> Time -> States
+printOutput (outLen,outLenBits) (tapeLen,tapeLenBits) valueBits from = Or $ fmap (\(mi,oi) -> And [isConst (MC from) tapeLenBits mi, isConst (OC from) outLenBits oi, makeEq (MidTape from mi) (OutTape oi) valueBits]) (prod [0..(tapeLen-1)] [0..(outLen-1)])
+
+acceptRule :: Source -> Time -> States
+acceptRule src t =
   And [nowPc, keepedPC, keepedMem, keepedMC, keepedOC, keepedIC]
   where
+    inLen = length (getInTape src)
+    inLenBits = calcBitLength inLen
+    progLen = length (getAST src)
+    progLenBits = calcBitLength progLen
+    tapeLenBits = getAddrBits src
+    tapeLen = 2 ^ tapeLenBits
+    outLenBits = getOutAddrBits src
+    valueBits = getValueBits src
     from = t
     to = incTime t
-    inLenBits = calcBitLength inLength
-    progLenBits = calcBitLength progLen
     nowPc = isConst (PC t) progLenBits progLen
     keepedPC = keepPC progLenBits from to
-    keepedMem = keepMidTape from to
-    keepedOC = keepOC from to
-    keepedMC = keepMC from to
+    keepedMem = keepMidTape valueBits tapeLen from to
+    keepedOC = keepOC outLenBits from to
+    keepedMC = keepMC tapeLenBits from to
     keepedIC = keepIC inLenBits from to
 
-genOpRule :: Int -> Int -> Time -> PC -> Tree -> [Int] -> States
-genOpRule progLen inLength t pc op addr =
+genOpRule :: Source -> Time -> PC -> Tree -> [Int] -> States
+genOpRule src t pc op addr =
   case op of
-    P.PtInc          -> And [nowPc, incPCp, keepedMem,           keepedOC, keepedIC, incMC from to addr]
-    P.PtDec          -> And [nowPc, incPCp, keepedMem,           keepedOC, keepedIC, decMC from to addr]
-    P.ValInc         -> And [nowPc, incPCp,            keepedMC, keepedOC, keepedIC, incMidTape from to addr]
-    P.ValDec         -> And [nowPc, incPCp,            keepedMC, keepedOC, keepedIC, decMidTape from to addr]
-    P.PutC           -> And [nowPc, incPCp, keepedMem, keepedMC,           keepedIC, printOutput from, incOC from to addr]
-    P.GetC           -> And [nowPc, incPCp,            keepedMC, keepedOC,           readInput inLength inLenBits from to, incIC inLenBits from to addr]
-    P.LoopBegin next -> And [nowPc,         keepedMem, keepedMC, keepedOC, keepedIC, Or $ map (\mc -> And [isConst (MC t) tapeLenBits mc, Or [And[ isZero (MidTape from mc) valueBits, changePC progLenBits progLen to next], And[notZero (MidTape from mc) valueBits, incPCp]]]) [0..tapeLen-1]]
-    P.LoopEnd next   -> And [nowPc,         keepedMem, keepedMC, keepedOC, keepedIC, Or $ map (\mc -> And [isConst (MC t) tapeLenBits mc, Or [And[notZero (MidTape from mc) valueBits, changePC progLenBits progLen to next], And[ isZero (MidTape from mc) valueBits, incPCp]]]) [0..tapeLen-1]]
+    PtInc          -> And [nowPc, incPCp, keepedMem,           keepedOC, keepedIC, incMC tapeLenBits from to addr]
+    PtDec          -> And [nowPc, incPCp, keepedMem,           keepedOC, keepedIC, decMC tapeLenBits from to addr]
+    ValInc         -> And [nowPc, incPCp,            keepedMC, keepedOC, keepedIC, incMidTape valueBits (tapeLen,tapeLenBits) from to addr]
+    ValDec         -> And [nowPc, incPCp,            keepedMC, keepedOC, keepedIC, decMidTape valueBits (tapeLen,tapeLenBits) from to addr]
+    PutC           -> And [nowPc, incPCp, keepedMem, keepedMC,           keepedIC, printOutput (outLen,outLenBits) (tapeLen,tapeLenBits) valueBits from, incOC outLenBits from to addr]
+    GetC           -> And [nowPc, incPCp,            keepedMC, keepedOC,           readInput (inLen,inLenBits) (tapeLen,tapeLenBits) valueBits from to, incIC inLenBits from to addr]
+    LoopBegin next -> And [nowPc,         keepedMem, keepedMC, keepedOC, keepedIC, Or $ map (\mc -> And [isConst (MC t) tapeLenBits mc, Or [And[ isZero (MidTape from mc) valueBits, changePC progLenBits progLen to next], And[notZero (MidTape from mc) valueBits, incPCp]]]) [0..tapeLen-1]]
+    LoopEnd next   -> And [nowPc,         keepedMem, keepedMC, keepedOC, keepedIC, Or $ map (\mc -> And [isConst (MC t) tapeLenBits mc, Or [And[notZero (MidTape from mc) valueBits, changePC progLenBits progLen to next], And[ isZero (MidTape from mc) valueBits, incPCp]]]) [0..tapeLen-1]]
   where
-    inLenBits = calcBitLength inLength
+    inLen = length (getInTape src)
+    inLenBits = calcBitLength inLen
+    progLen = length (getAST src)
     progLenBits = calcBitLength progLen
+    tapeLenBits = getAddrBits src
+    tapeLen = 2 ^ tapeLenBits
+    outLenBits = getOutAddrBits src
+    outLen = 2 ^ outLenBits
+    valueBits = getValueBits src
     from = t
     to = incTime t
     nowPc = isConst (PC t) progLenBits pc
     incPCp = changePC progLenBits progLen to (incPc pc)
-    keepedMem = keepMidTape from to
-    keepedOC = keepOC from to
-    keepedMC = keepMC from to
+    keepedMem = keepMidTape valueBits tapeLen from to
+    keepedOC = keepOC outLenBits from to
+    keepedMC = keepMC tapeLenBits from to
     keepedIC = keepIC inLenBits from to
 
-genStepRules :: Time -> [P.Tree] -> Int -> States
-genStepRules t src inLength = Or $
-                                    acceptRule (length src) inLength t
-                                    :fmap (\(pc,op) -> genOpRule (length src) inLength t pc op [getTime t,0]) (zip [0..] src)
+genStepRules :: Time -> Source -> States
+genStepRules t src = Or $
+                                    acceptRule src t
+                                    :fmap (\(pc,op) -> genOpRule src t pc op [getTime t,0]) (zip [0..] (getAST src))
 
-genMiddleState :: [P.Tree] -> Int -> States
-genMiddleState src inLength = And $ fmap ((\t -> genStepRules t src inLength) . Time) [(getTime t0)..(getTime lastTime - 1)]
+genMiddleState :: Source -> States
+genMiddleState src = And $ fmap ((\t -> genStepRules t src) . Time) [(getTime t0)..(getTime (lastTime src) - 1)]
 
 --------------------------------------------------------------------------------
 
-zeroFillOut :: Int -> States
-zeroFillOut idx = isZero (OutTape idx) valueBits
+zeroFillOut :: Int -> Int -> States
+zeroFillOut outLenBits idx = isZero (OutTape idx) outLenBits
 
-greaterThanOC :: Time -> Int -> States
-greaterThanOC t idx = Or $ isConst (OC t) outLenBits <$> [idx+1..(outLen-1)]
+greaterThanOC :: (Int,Int) -> Time -> Int -> States
+greaterThanOC (outLen, outLenBits) t idx = Or $ isConst (OC t) outLenBits <$> [idx+1..(outLen-1)]
 
-flushOC :: Time -> States
-flushOC t = And $ fmap (\ idx -> Or [greaterThanOC t idx, zeroFillOut idx]) [0..outLen-1]
+flushOC :: (Int,Int) -> Time -> States
+flushOC (outLen, outLenBits) t = And $ fmap (\ idx -> Or [greaterThanOC (outLen,outLenBits) t idx, zeroFillOut outLenBits idx]) [0..outLen-1]
 
-genLastState :: Int -> States
-genLastState progLen = And [isConst (PC lastTime) progLenBits progLen, flushOC lastTime]
+genLastState :: Source -> States
+genLastState src = And [isConst (PC $ lastTime src) progLenBits progLen, flushOC (outLen,outLenBits) (lastTime src)]
                         where
+                          outLenBits = getOutAddrBits src
+                          outLen = 2 ^ outLenBits
+                          progLen = length (getAST src)
                           progLenBits = calcBitLength progLen

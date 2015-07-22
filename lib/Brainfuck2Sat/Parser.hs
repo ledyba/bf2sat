@@ -1,15 +1,72 @@
-module Brainfuck2Sat.Parser (parse, Tree(..)) where
+module Brainfuck2Sat.Parser (parse, Source(..), Tree(..)) where
 
 import           Text.ParserCombinators.Parsec hiding (parse)
 import qualified Text.ParserCombinators.Parsec as P
 
+data Source = Source {
+  getAST :: [Tree],
+  getInTape :: [Int],
+  getValueBits :: Int,
+  getOutAddrBits :: Int,
+  getAddrBits :: Int,
+  getSimStep :: Int
+} deriving (Show)
 data Tree = PtInc | PtDec | ValInc | ValDec | PutC | GetC | LoopBegin Int | LoopEnd Int deriving (Show, Eq)
 
 flattenList :: [[a']] -> [a']
 flattenList = concat
 
-parse :: String -> Either ParseError [Tree]
-parse = P.parse (fmap (conv . flattenList) (P.many (P.choice [ops, loop]))) "<TEXT>"
+parse :: FilePath -> String -> Either ParseError Source
+parse = P.parse parseBody
+
+parseBody :: Parser Source
+parseBody = parseHead' $ Source [] [] 8 4 4 4
+  where
+    parseHead' src = choice [readHead src, readSource src]
+    readHead src = choice [readInTape src, readValueBits src, readOutAddrBits src, readAddrBits src, readSimSteps src]
+    readSource src = do
+      P.spaces
+      ast <- brainfuck
+      return $ Source ast (getInTape src) (getValueBits src) (getOutAddrBits src) (getAddrBits src) (getSimStep src)
+
+readInTape :: Source -> Parser Source
+readInTape src = do
+  v <- readL "in:" "[]-., 0123456789abcdefABCDEFXx"
+  return $ Source (getAST src) (read v) (getValueBits src) (getOutAddrBits src) (getAddrBits src) (getSimStep src)
+
+readValueBits :: Source -> Parser Source
+readValueBits src = do
+  v <- readL "value-bits:" "0123456789"
+  return $ Source (getAST src) (getInTape src) (read v) (getOutAddrBits src) (getAddrBits src) (getSimStep src)
+
+readOutAddrBits :: Source -> Parser Source
+readOutAddrBits src = do
+  v <- readL "out-addr-bits:" "0123456789"
+  return $ Source (getAST src) (getInTape src) (getValueBits src) (read v) (getAddrBits src) (getSimStep src)
+
+readAddrBits :: Source -> Parser Source
+readAddrBits src = do
+  v <- readL "addr-bits:" "0123456789"
+  return $ Source (getAST src) (getInTape src) (getValueBits src) (getOutAddrBits src) (read v) (getSimStep src)
+
+readSimSteps :: Source -> Parser Source
+readSimSteps src = do
+  v <- readL "steps:" "0123456789"
+  return $ Source (getAST src) (getInTape src) (getValueBits src) (getOutAddrBits src) (getAddrBits src) (read v)
+
+readL :: String -> String -> Parser String
+readL name vs = do
+  P.spaces
+  _ <- P.string name
+  P.spaces
+  tape <- P.many1 (P.oneOf vs)
+  P.spaces
+  return tape
+
+--------------------------------------------------------------------------------
+
+brainfuck :: Parser [Tree]
+brainfuck = fmap (conv . flattenList) (P.many (P.choice [ops, loop]))
 
 conv :: [Tree] -> [Tree]
 conv = conv' 0 []
