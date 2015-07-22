@@ -26,6 +26,7 @@ Library
             Brainfuck2Sat.Debug
             Brainfuck2Sat.CNF
             Brainfuck2Sat.RCNF
+            Brainfuck2Sat.Util
   hs-source-dirs:       lib
   Build-Depends:        base,parsec >= 3, containers, witherable, split, hashable, unordered-containers
 

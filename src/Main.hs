@@ -54,8 +54,11 @@ check fname = withSource fname $ \ src -> do
   print $ "Exec " ++ show (length ids) ++ " Steps"
   let pairs = (\((p1,a),(p2,v)) -> if p1 == p2 then (p1,a,v) else error "???" ) <$> zip ans val
   let notmatched = filter (\(_,a,v) -> a /= v) pairs
-  putStrLn $ "Do not match: " ++ show (length notmatched) ++ " items"
+  putStrLn $ "Do not match: " ++ show (length notmatched) ++ " predicates"
   mapM_ (\(cmp, a, v) -> putStrLn $ "(" ++ show cmp ++ ") / actual: "++ show a ++ " expected: "++ show v) notmatched
+  let (intape, ids) = E.fromSAT src ans
+  putStrLn $ "InTape: " ++ show intape
+  putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> show idx ++ ": " ++ show it) (zip ([0.. ] :: [Int]) ids)
 
 test :: FilePath -> IO ()
 test fname = withSource fname $ \ src -> do

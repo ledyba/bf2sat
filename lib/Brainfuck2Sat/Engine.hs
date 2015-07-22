@@ -1,6 +1,11 @@
-module Brainfuck2Sat.Engine (run, ID(..)) where
+module Brainfuck2Sat.Engine (run, ID(..),fromSAT) where
 
 import Brainfuck2Sat.Parser (Tree(..), Source(..))
+import Brainfuck2Sat.SAT (Component(..), Time(..))
+import Brainfuck2Sat.Util (calcBitLength)
+import Data.Bits (setBit)
+
+import qualified Data.HashMap.Strict as M
 
 data ID = ID {
   getPC :: Int,
@@ -48,3 +53,38 @@ run src = run' maxStep 0 (getAST src) 0 src 0 (take memLen [0,0..]) 0 [] []
         where
           memLen = 2 ^ getAddrBits src
           maxStep = getSimStep src
+
+fromSAT :: Source -> [(Component, Bool)] -> ([Int],[ID])
+fromSAT src preds = (intape, ids)
+  where
+    hashmap = M.fromList preds
+    ids :: [ID]
+    simStep = getSimStep src
+    ids = fmap recoverID [0..simStep - 1]
+    recoverInt :: (Int -> Component) -> Int -> Int
+    recoverInt (type_) bitLength = foldl recoverBit 0 [0..bitLength-1]
+                                    where
+                                      recoverBit :: Int -> Int -> Int
+                                      recoverBit r ic = if bit then r `setBit` ic else r
+                                                  where
+                                                    Just bit = M.lookup (type_ ic) hashmap
+    outLenBits = getOutAddrBits src
+    outLen = 2 ^ outLenBits
+    intape = fmap (\ic -> recoverInt (InTape ic) inLenBits) [0..inLen - 1]
+    outtape = fmap (\oc -> recoverInt (OutTape oc) outLenBits) [0..outLen - 1]
+    tapeLenBits = getAddrBits src
+    tapeLen = 2 ^ tapeLenBits
+    progLen = length $ getAST src
+    progLenBits = calcBitLength progLen
+    inLen = length $ getInTape src
+    inLenBits = calcBitLength inLen
+    valueBits = getValueBits src
+    recoverID :: Int -> ID
+    recoverID ti = ID pc mem pt ic oc (take oc outtape)
+                  where
+                    t = Time ti
+                    pc = recoverInt (PC t) progLenBits
+                    mem = fmap (\idx -> recoverInt (MidTape t idx) valueBits) [0..tapeLen-1]
+                    pt = recoverInt (MC t) tapeLenBits
+                    ic = recoverInt (IC t) inLenBits
+                    oc = recoverInt (OC t) outLenBits

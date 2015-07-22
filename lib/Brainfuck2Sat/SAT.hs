@@ -1,5 +1,7 @@
 module Brainfuck2Sat.SAT (Time(..), Component(..), Fml(..), States, gen) where
+
 import Brainfuck2Sat.Parser (Tree(..), Source(..))
+import Brainfuck2Sat.Util (calcBitLength, toBitList)
 
 import Control.Applicative ((<$>))
 import Data.Hashable (Hashable, hash, hashWithSalt)
@@ -40,16 +42,6 @@ instance Show Time where
 
 instance Read Time where
   readsPrec d s = fmap (CA.first Time) (readsPrec d s)
-
-calcBitLength :: Int -> Int
-calcBitLength n = calcBitLength' 0 1
-  where
-    calcBitLength' c acc | n < acc = c
-                         | otherwise = calcBitLength' (c+1) (acc*2)
-
-toBitList :: Int -> Int -> [Bool]
-toBitList len n | len > 0 = ((n `mod` 2) == 1):(toBitList (len-1) (n `div` 2))
-                | otherwise = []
 
 prod :: [a] -> [a] -> [(a,a)]
 prod a b = concat $ fmap ( \it1 -> fmap (\it2 -> (it1,it2) ) b ) a
