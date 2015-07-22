@@ -127,7 +127,7 @@ genInitState src =
                       ic = isZero (IC t0) inLenBits
                       mc = isZero (MC t0) tapeLenBits
                       oc = isZero (OC t0) outLenBits
-                      it = And $ (\(idx, v) -> makeConst (InTape idx) valueBits v) <$> zip [0..] inTape
+                      it = And $ zip [0..] inTape >>= (\(idx, v) -> if v >= 0 then [makeConst (InTape idx) valueBits v] else [])
                       mt = And $ (\idx -> isZero (MidTape t0 idx) valueBits) <$> [0..(tapeLen-1)]
 
 changePC :: Int -> Int -> Time -> PC -> States
