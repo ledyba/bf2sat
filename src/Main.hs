@@ -56,7 +56,18 @@ check fname = withSource fname $ \ src -> do
   let notmatched = filter (\(_,a,v) -> a /= v) pairs
   putStrLn $ "Do not match: " ++ show (length notmatched) ++ " predicates"
   mapM_ (\(cmp, a, v) -> putStrLn $ "(" ++ show cmp ++ ") / actual: "++ show a ++ " expected: "++ show v) notmatched
+  putStrLn "-- Recovered ID and In Tapes --"
+  let (intape, rids) = E.fromSAT src ans
+  putStrLn $ "InTape: " ++ show intape
+  putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> show idx ++ ": " ++ show it) (zip ([0.. ] :: [Int]) rids)
+
+recover :: FilePath -> IO ()
+recover fname = withSource fname $ \ src -> do
+  preds <- fmap (read :: String -> [(Int, S.Component)]) (readFile "pred.txt")
+  ansStr <- readFile "ans.txt"
+  let ans = R.fromDMACS preds ansStr
   let (intape, ids) = E.fromSAT src ans
+  putStrLn "-- Recovered ID and In Tapes --"
   putStrLn $ "InTape: " ++ show intape
   putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> show idx ++ ": " ++ show it) (zip ([0.. ] :: [Int]) ids)
 
@@ -77,5 +88,5 @@ main = do
   case argv of
     ("create":fpath:_) -> create fpath
     ("check":fpath:_) -> check fpath
-    ("test":fpath:_) -> test fpath
+    ("recover":fpath:_) -> recover fpath
     _ -> print "(>_<)"
