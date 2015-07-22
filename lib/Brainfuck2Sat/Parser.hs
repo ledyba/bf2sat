@@ -2,6 +2,7 @@ module Brainfuck2Sat.Parser (parse, Source(..), Tree(..)) where
 
 import           Text.ParserCombinators.Parsec hiding (parse)
 import qualified Text.ParserCombinators.Parsec as P
+import Brainfuck2Sat.Util (showInTape)
 
 data Source = Source {
   getAST :: [Tree],
@@ -16,7 +17,7 @@ data Tree = PtInc | PtDec | ValInc | ValDec | PutC | GetC | LoopBegin Int | Loop
 instance Show Source where
   show (Source ast intape valueBits addrBits outAddrBits simSteps) =
         "----\n  src:" ++ show ast ++
-        "\n  in: " ++ show intape ++
+        "\n  in: " ++ showInTape intape ++
         "\n  value-bits: " ++ show valueBits ++
         "\n  addr-bits:" ++ show addrBits ++
         "\n  out-addr-bits:" ++ show outAddrBits ++

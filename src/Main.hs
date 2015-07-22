@@ -6,6 +6,7 @@ import qualified Brainfuck2Sat.Engine as E
 import qualified Brainfuck2Sat.Debug as D
 import qualified Brainfuck2Sat.CNF as C
 import qualified Brainfuck2Sat.RCNF as R
+import Brainfuck2Sat.Util
 
 import System.Environment
 import Control.Applicative ((<$>))
@@ -58,7 +59,7 @@ check fname = withSource fname $ \ src -> do
   mapM_ (\(cmp, a, v) -> putStrLn $ "(" ++ show cmp ++ ") / actual: "++ show a ++ " expected: "++ show v) notmatched
   putStrLn "-- Recovered ID and In Tapes --"
   let (intape, rids) = E.fromSAT src ans
-  putStrLn $ "InTape: " ++ show intape
+  putStrLn $ "InTape: " ++ showInTape intape
   putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> show idx ++ ": " ++ show it) (zip ([0.. ] :: [Int]) rids)
 
 recover :: FilePath -> IO ()
@@ -68,7 +69,7 @@ recover fname = withSource fname $ \ src -> do
   let ans = R.fromDMACS preds ansStr
   let (intape, ids) = E.fromSAT src ans
   putStrLn "-- Recovered ID and In Tapes --"
-  putStrLn $ "InTape: " ++ show intape
+  putStrLn $ "InTape: " ++ showInTape intape
   putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> show idx ++ ": " ++ show it) (zip ([0.. ] :: [Int]) ids)
 
 test :: FilePath -> IO ()
