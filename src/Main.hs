@@ -31,7 +31,6 @@ makeSAT src = do
 
 withSource :: FilePath -> (P.Source -> IO ()) -> IO ()
 withSource fpath cont = do
-  putStrLn "Parsing..."
   text <- readFile fpath
   case P.parse fpath text of
     Right src -> cont src
@@ -39,15 +38,18 @@ withSource fpath cont = do
 
 create :: FilePath -> IO()
 create fname = withSource fname $ \ src -> do
-  print src
+  putStrLn "-- Setting --"
+  putStrLn $ show src
+  putStrLn "-- Create SAT problem --"
   (isat, dict) <- makeSAT src
   writeFile "pred.txt" (show dict)
   C.toDMACS isat dict "sat.txt"
-  putStrLn "All done, have fun."
 
 check :: FilePath -> IO ()
 check fname = withSource fname $ \ src -> do
   let ids = E.run src
+  putStrLn "-- Setting --"
+  putStrLn $ show src
   preds <- fmap (read :: String -> [(Int, S.Component)]) (readFile "pred.txt")
   ansStr <- readFile "ans.txt"
   let ans = R.fromDMACS preds ansStr
@@ -57,37 +59,43 @@ check fname = withSource fname $ \ src -> do
   let notmatched = filter (\(_,a,v) -> a /= v) pairs
   putStrLn $ "Do not match: " ++ show (length notmatched) ++ " predicates"
   mapM_ (\(cmp, a, v) -> putStrLn $ "(" ++ show cmp ++ ") / actual: "++ show a ++ " expected: "++ show v) notmatched
-  putStrLn "-- Recovered ID and In Tapes --"
+  putStrLn "-- Result --"
   let (intape, rids) = E.fromSAT src ans
-  putStrLn $ "InTape: " ++ showInTape intape
+  putStrLn $ "         Source:" ++ P.getSource src
+  putStrLn $ "          Input: " ++ showInTape (P.getInTape src)
+  putStrLn $ "Estimated Input: " ++ showInTape intape
+  putStrLn "Estimated IDs:"
   putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> show idx ++ ": " ++ show it) (zip ([0.. ] :: [Int]) rids)
 
 recover :: FilePath -> IO ()
 recover fname = withSource fname $ \ src -> do
+  putStrLn "-- Setting --"
+  putStrLn $ show src
   preds <- fmap (read :: String -> [(Int, S.Component)]) (readFile "pred.txt")
   ansStr <- readFile "ans.txt"
   let ans = R.fromDMACS preds ansStr
-  let (intape, ids) = E.fromSAT src ans
-  putStrLn "-- Recovered ID and In Tapes --"
-  putStrLn $ "InTape: " ++ showInTape intape
-  putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> show idx ++ ": " ++ show it) (zip ([0.. ] :: [Int]) ids)
+  let (intape, rids) = E.fromSAT src ans
+  putStrLn "-- Result --"
+  putStrLn $ "         Source:" ++ P.getSource src
+  putStrLn $ "          Input: " ++ showInTape (P.getInTape src)
+  putStrLn $ "Estimated Input: " ++ showInTape intape
+  putStrLn "Estimated IDs:"
+  putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> show idx ++ ": " ++ show it) (zip ([0.. ] :: [Int]) rids)
 
-test :: FilePath -> IO ()
-test fname = withSource fname $ \ src -> do
-  let ids = E.run src
-  let sat = S.gen src
-  let r = D.eval sat src ids
-  print $ show $ P.getAST src
-  print $ show $ P.getInTape src
-  putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> show idx ++ ": " ++ show it) (zip ([0.. ] :: [Int]) ids)
-  --print $ show sat
-  print $ show r
+usage :: IO()
+usage = do
+  putStrLn "usage:"
+  putStrLn "  cabal run create <hoge.bf>"
+  putStrLn "  cabal run check <hoge.bf>"
+  putStrLn "  cabal run recover <hoge.bf>"
 
 main :: IO ()
 main = do
+  putStrLn "** Brainfuck 2 SAT **"
   argv <- getArgs
   case argv of
     ("create":fpath:_) -> create fpath
     ("check":fpath:_) -> check fpath
     ("recover":fpath:_) -> recover fpath
-    _ -> print "(>_<)"
+    _ -> usage
+  putStrLn "All done, have fun."
