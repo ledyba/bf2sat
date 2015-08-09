@@ -1,13 +1,8 @@
 module Brainfuck2Sat.RCNF (fromDMACS) where
 
 import Brainfuck2Sat.SAT
+import Brainfuck2Sat.Util
 import Data.List.Split (splitOn)
-import Data.List (sortBy)
-import Data.Ord         ( comparing )
-
-sortOn :: Ord b => (a -> b) -> [a] -> [a]
-sortOn f =
-  map snd . sortBy (comparing fst) . map (\x -> let y = f x in y `seq` (y, x))
 
 parseDMACS :: String -> [(Int, Bool)]
 parseDMACS str = ansMap

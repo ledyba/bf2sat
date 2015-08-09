@@ -3,7 +3,7 @@ module Brainfuck2Sat.Parser (parse, Tree(..)) where
 import           Text.ParserCombinators.Parsec hiding (parse)
 import qualified Text.ParserCombinators.Parsec as P
 
-data Tree = PtInc | PtDec | ValInc | ValDec | PutC | GetC | LoopBegin Int | LoopEnd Int deriving (Show, Eq)
+data Tree = PtInc | PtDec | ValInc | ValDec | PutC | GetC | LoopBegin Int | LoopEnd Int deriving (Show, Eq, Ord)
 
 flattenList :: [[a']] -> [a']
 flattenList = concat

@@ -1,6 +1,8 @@
 module Brainfuck2Sat.SAT (Time(..), Component(..), Fml(..), States, gen, outLen, tapeLen, timeLen) where
-import Brainfuck2Sat.Parser as P
 
+import Brainfuck2Sat.Parser as P
+import Brainfuck2Sat.Util
+import Data.List (groupBy)
 import Control.Applicative ((<$>))
 import Data.Hashable (Hashable, hash, hashWithSalt)
 import qualified Control.Arrow as CA
@@ -98,9 +100,6 @@ lastTime = Time (timeLen-1)
 incTime :: Time -> Time
 incTime t = Time $ 1 + getTime t
 
-incPc :: PC -> PC
-incPc t = t + 1
-
 --------------------------------------------------------------------------------
 
 makeConst :: (Int -> Component) -> Int -> Int -> Fml Component
@@ -146,8 +145,8 @@ genInitState progLen inTape =
                       it = And $ (\(idx, v) -> makeConst (InTape idx) valueBits v) <$> zip [0..] inTape
                       mt = And $ (\idx -> isZero (MidTape t0 idx) valueBits) <$> [0..(tapeLen-1)]
 
-changePC :: Int -> Int -> Time -> PC -> States
-changePC progLenBits progLen t nextPC = makeConst (PC t) progLenBits (min progLen nextPC)
+changePC :: Int -> Int -> Time -> Time -> [Int] -> States
+changePC progLenBits progLen from_ to_ addr_ = Or [ And [isConst (PC from_) progLenBits progLen, makeEq (PC from_) (PC to_) progLenBits], And [Not $ isConst (PC from_) progLenBits progLen, makeInc (PC from_) (PC to_) progLenBits addr_] ]
 
 makeInc :: (Int -> Component) -> (Int -> Component) -> Int -> [Int] -> Fml Component
 makeInc from_ to_ bitLength addr =
@@ -231,24 +230,24 @@ acceptRule progLen inLength t =
     keepedMC = keepMC from to
     keepedIC = keepIC inLenBits from to
 
-genOpRule :: Int -> Int -> Time -> PC -> Tree -> [Int] -> States
-genOpRule progLen inLength t pc op addr =
+genOpRule :: Int -> Int -> Time -> [PC] -> Tree -> [Int] -> States
+genOpRule progLen inLength t pcs op addr =
   case op of
-    P.PtInc          -> And [nowPc, incPCp, keepedMem,           keepedOC, keepedIC, incMC from to addr]
-    P.PtDec          -> And [nowPc, incPCp, keepedMem,           keepedOC, keepedIC, decMC from to addr]
-    P.ValInc         -> And [nowPc, incPCp,            keepedMC, keepedOC, keepedIC, incMidTape from to addr]
-    P.ValDec         -> And [nowPc, incPCp,            keepedMC, keepedOC, keepedIC, decMidTape from to addr]
-    P.PutC           -> And [nowPc, incPCp, keepedMem, keepedMC,           keepedIC, printOutput from, incOC from to addr]
-    P.GetC           -> And [nowPc, incPCp,            keepedMC, keepedOC,           readInput inLength inLenBits from to, incIC inLenBits from to addr]
-    P.LoopBegin next -> And [nowPc,         keepedMem, keepedMC, keepedOC, keepedIC, Or $ map (\mc -> And [isConst (MC t) tapeLenBits mc, Or [And[ isZero (MidTape from mc) valueBits, changePC progLenBits progLen to next], And[notZero (MidTape from mc) valueBits, incPCp]]]) [0..tapeLen-1]]
-    P.LoopEnd next   -> And [nowPc,         keepedMem, keepedMC, keepedOC, keepedIC, Or $ map (\mc -> And [isConst (MC t) tapeLenBits mc, Or [And[notZero (MidTape from mc) valueBits, changePC progLenBits progLen to next], And[ isZero (MidTape from mc) valueBits, incPCp]]]) [0..tapeLen-1]]
+    P.PtInc          -> And [nowPc, incPCp, keepedMem,           keepedOC, keepedIC, incMC from to (0:addr)]
+    P.PtDec          -> And [nowPc, incPCp, keepedMem,           keepedOC, keepedIC, decMC from to (0:addr)]
+    P.ValInc         -> And [nowPc, incPCp,            keepedMC, keepedOC, keepedIC, incMidTape from to (0:addr)]
+    P.ValDec         -> And [nowPc, incPCp,            keepedMC, keepedOC, keepedIC, decMidTape from to (0:addr)]
+    P.PutC           -> And [nowPc, incPCp, keepedMem, keepedMC,           keepedIC, printOutput from, incOC from to (0:addr)]
+    P.GetC           -> And [nowPc, incPCp,            keepedMC, keepedOC,           readInput inLength inLenBits from to, incIC inLenBits from to (0:addr)]
+    P.LoopBegin next -> And [nowPc,         keepedMem, keepedMC, keepedOC, keepedIC, Or $ map (\mc -> And [isConst (MC t) tapeLenBits mc, Or [And[ isZero (MidTape from mc) valueBits, makeConst (PC to) progLenBits next], And[notZero (MidTape from mc) valueBits, incPCp]]]) [0..tapeLen-1]]
+    P.LoopEnd next   -> And [nowPc,         keepedMem, keepedMC, keepedOC, keepedIC, Or $ map (\mc -> And [isConst (MC t) tapeLenBits mc, Or [And[notZero (MidTape from mc) valueBits, makeConst (PC to) progLenBits next], And[ isZero (MidTape from mc) valueBits, incPCp]]]) [0..tapeLen-1]]
   where
     inLenBits = calcBitLength inLength
     progLenBits = calcBitLength progLen
     from = t
     to = incTime t
-    nowPc = isConst (PC t) progLenBits pc
-    incPCp = changePC progLenBits progLen to (incPc pc)
+    nowPc = Or $ fmap (isConst (PC t) progLenBits) pcs
+    incPCp = changePC progLenBits progLen from to (1:addr)
     keepedMem = keepMidTape from to
     keepedOC = keepOC from to
     keepedMC = keepMC from to
@@ -256,8 +255,10 @@ genOpRule progLen inLength t pc op addr =
 
 genStepRules :: Time -> [P.Tree] -> Int -> States
 genStepRules t src inLength = Or $
-                                    acceptRule (length src) inLength t
-                                    :fmap (\(pc,op) -> genOpRule (length src) inLength t pc op [getTime t,0]) (zip [0..] src)
+                  acceptRule (length src) inLength t
+                  :fmap (\(pcs,op) -> genOpRule (length src) inLength t pcs op [getTime t,0]) grouped
+              where
+                grouped = fmap (\lst -> (fmap fst lst,snd $ head lst)) $ groupBy (\(_,op1) (_,op2) -> op1 == op2) $ sortOn (\(_,op)->op) (zip [0..] src)
 
 genMiddleState :: [P.Tree] -> Int -> States
 genMiddleState src inLength = And $ fmap ((\t -> genStepRules t src inLength) . Time) [(getTime t0)..(getTime lastTime - 1)]
