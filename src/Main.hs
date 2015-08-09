@@ -54,7 +54,7 @@ check fname = withSource fname $ \ src -> do
   ansStr <- readFile "ans.txt"
   let ans = R.fromDMACS preds ansStr
   let val = D.valuation (fmap fst ans) src ids
-  print $ "Exec " ++ show (length ids) ++ " Steps"
+  putStrLn $ "** Exec " ++ show (length ids) ++ " Steps **"
   let pairs = (\((p1,a),(p2,v)) -> if p1 == p2 then (p1,a,v) else error "???" ) <$> zip ans val
   let notmatched = filter (\(_,a,v) -> a /= v) pairs
   putStrLn $ "Do not match: " ++ show (length notmatched) ++ " predicates"
@@ -66,9 +66,18 @@ check fname = withSource fname $ \ src -> do
   putStrLn $ "Estimated Input: " ++ showInTape intape
   putStrLn "Estimated IDs:"
   putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> show idx ++ ": " ++ show it) (zip ([0.. ] :: [Int]) rids)
+--
+exec :: FilePath -> IO ()
+exec fname = withSource fname $ \ src -> do
+  let ids = E.run src
+  putStrLn "-- Setting --"
+  putStrLn $ show src
+  putStrLn $ "** Exec " ++ show (length ids) ++ " Steps **"
+  putStrLn "IDs:"
+  putStrLn $ L.intercalate "\n" $ fmap (\(idx, it) -> show idx ++ ": " ++ show it) (zip ([0.. ] :: [Int]) ids)
 
-recover :: FilePath -> IO ()
-recover fname = withSource fname $ \ src -> do
+decode :: FilePath -> IO ()
+decode fname = withSource fname $ \ src -> do
   putStrLn "-- Setting --"
   putStrLn $ show src
   preds <- fmap (read :: String -> [(Int, S.Component)]) (readFile "pred.txt")
@@ -87,7 +96,8 @@ usage = do
   putStrLn "usage:"
   putStrLn "  cabal run create <hoge.bf>"
   putStrLn "  cabal run check <hoge.bf>"
-  putStrLn "  cabal run recover <hoge.bf>"
+  putStrLn "  cabal run decode <hoge.bf>"
+  putStrLn "  cabal run exec <hoge.bf>"
 
 main :: IO ()
 main = do
@@ -96,6 +106,7 @@ main = do
   case argv of
     ("create":fpath:_) -> create fpath
     ("check":fpath:_) -> check fpath
-    ("recover":fpath:_) -> recover fpath
+    ("decode":fpath:_) -> decode fpath
+    ("exec":fpath:_) -> exec fpath
     _ -> usage
   putStrLn "All done, have fun."
