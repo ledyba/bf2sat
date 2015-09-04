@@ -1,4 +1,4 @@
-in: [3, 5]
+in: [-1, -1]
 value-bits: 3
 addr-bits: 3
 steps:532
