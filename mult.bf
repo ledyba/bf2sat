@@ -1,7 +1,7 @@
-in: [-1, -1, 0, 0]
-value-bits: 8
-addr-bits: 4
+in: [3, 5, 0, 0]
+value-bits: 3
+addr-bits: 3
 steps:532
-out-addr-bits: 2
+out-addr-bits: 1
 
 ,>,<[->>+<<]>[-<>>[->+>+<<]<<>>>>[-<<+>>]<<<<>>>[-<<<+>>>]<<<>]<---------------
