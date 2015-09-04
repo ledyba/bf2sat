@@ -1,23 +1,23 @@
-.PHONY: hello
+.PHONY: hello simple simple-nondet prime-fact clean
 
 hello:
 	cabal run create hello.bf
-	minisat sat.txt ans.txt
+	minisat sat.txt ans.txt || true
 	cabal run decode hello.bf
 
-easy:
-	cabal run create easy.bf
-	minisat sat.txt ans.txt
-	cabal run decode easy.bf
+simple:
+	cabal run create simple.bf
+	minisat sat.txt ans.txt || true
+	cabal run decode simple.bf
 
-easy-nondet:
-	cabal run create easy-nondet.bf
-	minisat sat.txt ans.txt
-	cabal run decode easy-nondet.bf
+simple-nondet:
+	cabal run create simple-nondet.bf
+	minisat sat.txt ans.txt || true
+	cabal run decode simple-nondet.bf
 
 prime-fact:
 	cabal run create mult.bf
-	minisat sat.txt ans.txt
+	minisat sat.txt ans.txt || true
 	cabal run decode mult.bf
 
 clean:

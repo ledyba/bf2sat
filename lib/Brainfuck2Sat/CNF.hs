@@ -26,8 +26,9 @@ instance (Hashable v) => Hashable (CFml v) where
   hashWithSalt s (CNot k) = s + hash k + 1309482590
 
 toCNF' :: [Int] -> Fml Component -> [[CFml Component]]
+toCNF' _ (And _) = []
+toCNF' _ (Or []) = []
 toCNF' addr (And xs) = zip [0..] xs >>= (\ (idx,it) -> toCNF' (idx:addr) it)
-toCNF' _ (Or []) = [[]]
 toCNF' addr (Or [x]) = toCNF' (0:addr) x
 toCNF' addr (Or (x:y:xs))  = zip [0..] cnfs >>= appendFn
       where

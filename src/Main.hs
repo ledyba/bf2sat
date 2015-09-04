@@ -27,7 +27,7 @@ makeSAT src = do
   putStrLn "Aliasing..."
   let (isat, dict) = C.makeAlias cnf
   putStrLn $ show (length dict)++" uniq predicates"
-  putStrLn "writ to file"
+  putStrLn "write to file"
   return (isat,dict)
 
 withSource :: FilePath -> (P.Source -> IO ()) -> IO ()
