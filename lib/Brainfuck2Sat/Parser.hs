@@ -56,32 +56,32 @@ parseBody text = parseBody' $ Source "" [] [] 8 4 4 4
       to <- P.getPosition
       let Just floc = offset text from
       let Just tloc = offset text to
-      return $ Source (strip $ drop floc $ take tloc text) ast (getInTape src) (getValueBits src) (getAddrBits src) (getOutAddrBits src) (getSimStep src)
+      return $ src {getSource=strip $ drop floc $ take tloc text,getAST=ast }
 
 readInTape :: Source -> Parser Source
 readInTape src = do
   v <- readL "in:" "[]-., 0123456789abcdefABCDEFXx"
-  return $ Source (getSource src) (getAST src) (read v) (getValueBits src) (getAddrBits src) (getOutAddrBits src) (getSimStep src)
+  return $ src {getInTape=read v}
 
 readValueBits :: Source -> Parser Source
 readValueBits src = do
   v <- readL "value-bits:" "0123456789"
-  return $ Source (getSource src) (getAST src) (getInTape src) (read v) (getAddrBits src) (getOutAddrBits src) (getSimStep src)
+  return $ src{ getValueBits= (read v) }
 
 readOutAddrBits :: Source -> Parser Source
 readOutAddrBits src = do
   v <- readL "out-addr-bits:" "0123456789"
-  return $ Source (getSource src) (getAST src) (getInTape src) (getValueBits src) (getAddrBits src) (read v) (getSimStep src)
+  return $ src{ getOutAddrBits=(read v) }
 
 readAddrBits :: Source -> Parser Source
 readAddrBits src = do
   v <- readL "addr-bits:" "0123456789"
-  return $ Source (getSource src) (getAST src) (getInTape src) (getValueBits src) (read v) (getOutAddrBits src) (getSimStep src)
+  return $ src{ getAddrBits=(read v) }
 
 readSimSteps :: Source -> Parser Source
 readSimSteps src = do
   v <- readL "steps:" "0123456789"
-  return $ Source (getSource src) (getAST src) (getInTape src) (getValueBits src) (getAddrBits src) (getOutAddrBits src) (read v)
+  return $ src{ getSimStep=(read v) }
 
 readL :: String -> String -> Parser String
 readL name vs = do
@@ -95,7 +95,7 @@ readL name vs = do
 --------------------------------------------------------------------------------
 
 brainfuck :: Parser [Tree]
-brainfuck = fmap (conv . flattenList) (P.many (P.choice [ops, loop]))
+brainfuck = fmap (conv . flattenList) (P.many1 ops)
 
 conv :: [Tree] -> [Tree]
 conv = conv' 0 []
@@ -117,7 +117,7 @@ op = do
    return $ ch2tree ch
 
 ops :: P.Parser [Tree]
-ops = P.many1 op
+ops = fmap flattenList (P.many1 $ P.choice [loop, P.many1 op])
 
 ch2tree :: Char -> Tree
 ch2tree ch =
