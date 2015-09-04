@@ -6,6 +6,7 @@ import qualified Brainfuck2Sat.Engine as E
 import qualified Brainfuck2Sat.Debug as D
 import qualified Brainfuck2Sat.CNF as C
 import qualified Brainfuck2Sat.RCNF as R
+import qualified Data.HashMap.Strict as M
 import Brainfuck2Sat.Util
 
 import System.Environment
@@ -53,9 +54,9 @@ check fname = withSource fname $ \ src -> do
   preds <- fmap (read :: String -> [(Int, S.Component)]) (readFile "pred.txt")
   ansStr <- readFile "ans.txt"
   let ans = R.fromDMACS preds ansStr
-  let val = D.valuation (fmap fst ans) src ids
+  let val = D.valuation (M.keys ans) src ids
   putStrLn $ "** Exec " ++ show (length ids) ++ " Steps **"
-  let pairs = (\((p1,a),(p2,v)) -> if p1 == p2 then (p1,a,v) else error "???" ) <$> zip ans val
+  let pairs = fmap (\(p2,v) -> (p2,  M.lookupDefault (error "???") p2 ans,v)) val
   let notmatched = filter (\(_,a,v) -> a /= v) pairs
   putStrLn $ "Do not match: " ++ show (length notmatched) ++ " predicates"
   mapM_ (\(cmp, a, v) -> putStrLn $ "(" ++ show cmp ++ ") / actual: "++ show a ++ " expected: "++ show v) notmatched

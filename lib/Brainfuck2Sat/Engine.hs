@@ -54,10 +54,9 @@ run src = run' maxStep 0 (getAST src) 0 src 0 (take memLen [0,0..]) 0 [] []
           memLen = 2 ^ getAddrBits src
           maxStep = getSimStep src
 
-fromSAT :: Source -> [(Component, Bool)] -> ([Int],[ID])
-fromSAT src preds = (intape, ids)
+fromSAT :: Source ->  M.HashMap Component Bool -> ([Int],[ID])
+fromSAT src hashmap = (intape, ids)
   where
-    hashmap = M.fromList preds
     ids :: [ID]
     simStep = getSimStep src
     ids = fmap recoverID [0..simStep - 1]
