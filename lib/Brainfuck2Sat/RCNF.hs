@@ -19,7 +19,7 @@ parseDMACS str = ansMap
     ansMap = fmap ansF (reverse available)
 
 fromDMACS :: [(Int, Component)] -> String -> M.HashMap Component Bool
-fromDMACS preds str = showIO (show.(M.size)) $ makeHash zipped M.empty
+fromDMACS preds str = id $! makeHash zipped M.empty
   where
     r = parseDMACS str
     sortedR = sortOn fst r
