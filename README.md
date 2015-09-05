@@ -24,11 +24,11 @@ cabal install
 Here is a very simple sample:
 
 ```
-in: [0, 0, 0, 0]
-value-bits: 8
-addr-bits: 4
-steps: 18
-out-addr-bits: 2
+in: [0, 0, 0, 0] <- input data
+value-bits: 8 <- Bit width of the value registers
+addr-bits: 4 <- Bit width of the memory address space
+steps: 18 <- Number of execution steps.
+out-addr-bits: 2 <- Length of output must be less than 2^(out-addr-bits)
 
 ++[->++<]
 ```
