@@ -4,10 +4,6 @@ import Brainfuck2Sat.SAT
 import Brainfuck2Sat.Util
 import Data.List.Split (splitOn)
 import qualified Data.HashMap.Strict as M
-import System.IO.Unsafe
-
-showIO :: (a -> String) -> a -> a
-showIO f k = unsafePerformIO (putStrLn ("val: "++(f k)) >> return k)
 
 parseDMACS :: String -> [(Int, Bool)]
 parseDMACS str = ansMap

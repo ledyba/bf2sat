@@ -1,8 +1,12 @@
-module Brainfuck2Sat.Util (sortOn,calcBitLength, toBitList, showInTape) where
+module Brainfuck2Sat.Util (sortOn,calcBitLength, toBitList, showInTape, showIO) where
 
 import qualified Data.List as L
 import Data.List (sortBy)
 import Data.Ord  ( comparing )
+import System.IO.Unsafe
+
+showIO :: (a -> String) -> a -> a
+showIO f k = unsafePerformIO (putStrLn ("val: "++(f k)) >> return k)
 
 sortOn :: Ord b => (a -> b) -> [a] -> [a]
 sortOn f =

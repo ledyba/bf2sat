@@ -1,9 +1,8 @@
 module Brainfuck2Sat.SAT (Time(..), Component(..), Fml(..), States, gen) where
 
 import Brainfuck2Sat.Parser (Tree(..), Source(..))
-import Brainfuck2Sat.Util (calcBitLength, toBitList, sortOn)
+import Brainfuck2Sat.Util (calcBitLength, toBitList, sortOn, showIO)
 
-import Brainfuck2Sat.Parser as P
 import Data.List (groupBy)
 import Control.Applicative ((<$>))
 import Data.Hashable (Hashable, hash, hashWithSalt)
@@ -154,7 +153,7 @@ incMidTape valueBits (tapeLen,tapeLenBits) from to addr = Or $ fmap each [0..tap
     each idx = And [isConst (MC from) tapeLenBits idx,makeInc (MidTape from idx) (MidTape to idx) valueBits addr, keepMidTapeElse valueBits tapeLen from to idx]
 
 decMidTape :: Int -> (Int,Int) -> Time -> Time -> [Int] -> States
-decMidTape valueBits (tapeLen,tapeLenBits) from to addr = Or $ fmap each [0..tapeLenBits-1]
+decMidTape valueBits (tapeLen,tapeLenBits) from to addr = Or $ fmap each [0..tapeLen-1]
   where
     each idx = And [isConst (MC from) tapeLenBits idx,makeDec (MidTape from idx) (MidTape to idx) valueBits addr, keepMidTapeElse valueBits tapeLen from to idx]
 
@@ -220,8 +219,8 @@ genOpRule src t pcs op addr =
     PtDec          -> And [nowPc, incPCp, keepedMem,           keepedOC, keepedIC, decMC tapeLenBits from to (0:addr)]
     ValInc         -> And [nowPc, incPCp,            keepedMC, keepedOC, keepedIC, incMidTape valueBits (tapeLen,tapeLenBits) from to (0:addr)]
     ValDec         -> And [nowPc, incPCp,            keepedMC, keepedOC, keepedIC, decMidTape valueBits (tapeLen,tapeLenBits) from to (0:addr)]
-    PutC           -> And [nowPc, incPCp, keepedMem, keepedMC,           keepedIC, printOutput (outLen,outLenBits) (tapeLen,tapeLenBits) valueBits from, incOC outLenBits from to (0:addr)]
-    GetC           -> And [nowPc, incPCp,            keepedMC, keepedOC,           readInput (inLen,inLenBits) (tapeLen,tapeLenBits) valueBits from to, incIC inLenBits from to (0:addr)]
+    PutC           -> And [nowPc, incPCp, keepedMem, keepedMC,           keepedIC, printOutput (outLen,outLenBits) (tapeLen,tapeLenBits) valueBits from,    incOC outLenBits from to (0:addr)]
+    GetC           -> And [nowPc, incPCp,            keepedMC, keepedOC,           readInput   (inLen,inLenBits)   (tapeLen,tapeLenBits) valueBits from to, incIC inLenBits  from to (0:addr)]
     LoopBegin next -> And [nowPc,         keepedMem, keepedMC, keepedOC, keepedIC, Or $ map (\mc -> And [isConst (MC t) tapeLenBits mc, Or [And[ isZero (MidTape from mc) valueBits, makeConst (PC to) progLenBits next], And[notZero (MidTape from mc) valueBits, incPCp]]]) [0..tapeLen-1]]
     LoopEnd next   -> And [nowPc,         keepedMem, keepedMC, keepedOC, keepedIC, Or $ map (\mc -> And [isConst (MC t) tapeLenBits mc, Or [And[notZero (MidTape from mc) valueBits, makeConst (PC to) progLenBits next], And[ isZero (MidTape from mc) valueBits, incPCp]]]) [0..tapeLen-1]]
   where
