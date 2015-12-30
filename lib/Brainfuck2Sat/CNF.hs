@@ -1,6 +1,6 @@
 {-# LANGUAGE ExplicitForAll #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Brainfuck2Sat.CNF (CFml(..),removeNot, toCNF, makeAlias, toDMACS) where
+module Brainfuck2Sat.CNF (CFml(..),removeNot, toCNF, makeAlias, toDIMACS) where
 
 import Brainfuck2Sat.SAT
 import qualified Data.HashMap.Strict as M
@@ -71,8 +71,8 @@ makeAlias cnf = (ints, fmap swap lists)
     term2int (CAff x) = dict ! x
     term2int (CNot x) = -(dict ! x)
 
-toDMACS' :: [[Int]] -> [(Int, Component)] -> Handle -> IO ()
-toDMACS' cnf dict handle = do
+toDIMACS' :: [[Int]] -> [(Int, Component)] -> Handle -> IO ()
+toDIMACS' cnf dict handle = do
   hPutStr handle "p cnf "
   hPutStr handle $ show $ length dict
   hPutChar handle ' '
@@ -88,5 +88,5 @@ toDMACS' cnf dict handle = do
       hPutChar handle ' '
       printClause xs
 
-toDMACS :: [[Int]] -> [(Int, Component)] -> FilePath -> IO()
-toDMACS cnf dict fileName = withFile fileName WriteMode (toDMACS' cnf dict)
+toDIMACS :: [[Int]] -> [(Int, Component)] -> FilePath -> IO()
+toDIMACS cnf dict fileName = withFile fileName WriteMode (toDIMACS' cnf dict)

@@ -44,7 +44,7 @@ create fname = withSource fname $ \ src -> do
   putStrLn "-- Create SAT problem --"
   (isat, dict) <- makeSAT src
   writeFile "pred.txt" (show dict)
-  C.toDMACS isat dict "sat.txt"
+  C.toDIMACS isat dict "sat.txt"
 
 check :: FilePath -> IO ()
 check fname = withSource fname $ \ src -> do
@@ -53,7 +53,7 @@ check fname = withSource fname $ \ src -> do
   putStrLn $ show src
   preds <- fmap (read :: String -> [(Int, S.Component)]) (readFile "pred.txt")
   ansStr <- readFile "ans.txt"
-  let ans = R.fromDMACS preds ansStr
+  let ans = R.fromDIMACS preds ansStr
   let val = D.valuation (M.keys ans) src ids
   putStrLn $ "** Exec " ++ show (length ids) ++ " Steps **"
   let pairs = fmap (\(p2,v) -> (p2,  M.lookupDefault (error "???") p2 ans,v)) val
@@ -83,7 +83,7 @@ decode fname = withSource fname $ \ src -> do
   putStrLn $ show src
   preds <- fmap (read :: String -> [(Int, S.Component)]) (readFile "pred.txt")
   ansStr <- readFile "ans.txt"
-  let ans = R.fromDMACS preds ansStr
+  let ans = R.fromDIMACS preds ansStr
   let (intape, rids) = E.fromSAT src ans
   putStrLn "-- Result --"
   putStrLn $ "         Source:" ++ P.getSource src
