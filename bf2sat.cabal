@@ -5,8 +5,8 @@ name:                brainfuck2sat
 version:             0.1.0.0
 -- synopsis:
 -- description:
-homepage:            http://ledyba.org/
-license:             GPL-3
+homepage:            https://7io.org/
+license:             AGPL-3.0-or-later
 license-file:        LICENSE
 author:              PSI
 maintainer:          ledyba@users.osdn.me
